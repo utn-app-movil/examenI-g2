@@ -13,8 +13,10 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import cr.ac.utn.examenI.domain.model.Country
+import cr.ac.utn.examenI.domain.model.FliFlight
 import cr.ac.utn.examenI.util.EXTRA_ID
 import cr.ac.utn.examenI.util.util
+import cr.ac.utn.examenI.viewmodel.FliViewModel
 import java.time.LocalDateTime
 
 class FliCrudActivity : AppCompatActivity() {
@@ -73,7 +75,7 @@ class FliCrudActivity : AppCompatActivity() {
     }
 
     private fun loadExistingData(id: String) {
-        /*val item = FliViewModel.getById(id) ?: return
+        val item = FliViewModel.getById(id) ?: return
         txtId.setText(item.id)
         txtId.isEnabled = false
         txtName.setText(item.name)
@@ -85,12 +87,17 @@ class FliCrudActivity : AppCompatActivity() {
         spnOriginCountry.setSelection(countries.indexOf(item.originCountry))
         spnDestCountry.setSelection(countries.indexOf(item.destCountry))
         txtFlightNum.setText(item.flightNumber)
-        txtDateTime.setText(util.formatDateTime(item.flightDateTime))*/
+        txtDateTime.setText(util.formatDateTime(item.flightDateTime))
     }
 
     private fun doSave() {
         val id = txtId.text.toString().trim()
         val name = txtName.text.toString().trim()
+        val firstName = txtFirstName.text.toString().trim()
+        val lastName = txtLastName.text.toString().trim()
+        val phone = txtPhone.text.toString().trim().toIntOrNull() ?: 0
+        val email = txtEmail.text.toString().trim()
+        val address = txtAddress.text.toString().trim()
         val flightNum = txtFlightNum.text.toString().trim().uppercase()
         val dateTimeStr = txtDateTime.text.toString().trim()
 
@@ -107,9 +114,6 @@ class FliCrudActivity : AppCompatActivity() {
             return
         }
 
-        val seatsAvailable = 150
-        val totalPassengers = seatsAvailable
-
         val flightRegex = Regex("""^[A-Z]{2}\d{4}$""")
         if (!flightRegex.matches(flightNum)) {
             Toast.makeText(this, "Flight number must be in AB1234 format.", Toast.LENGTH_SHORT).show()
@@ -122,16 +126,28 @@ class FliCrudActivity : AppCompatActivity() {
             return
         }
 
-
+        val item = FliFlight(
+            id = id,
+            name = name,
+            firstName = firstName,
+            lastName = lastName,
+            phone = phone,
+            email = email,
+            address = address,
+            originCountry = origin,
+            destCountry = dest,
+            flightNumber = flightNum,
+            flightDateTime = dt
+        )
 
         if (currentId.isNullOrEmpty()) {
-            if (null != null) {
+            if (FliViewModel.getById(id) != null) {
                 Toast.makeText(this, getString(R.string.TextDuplicateData), Toast.LENGTH_SHORT).show()
                 return
             }
-            //FliViewModel.save(item)
+            FliViewModel.save(item)
         } else {
-            //FliViewModel.update(item)
+            FliViewModel.update(item)
         }
 
         Toast.makeText(this, getString(R.string.TextSaveSuccess), Toast.LENGTH_SHORT).show()
@@ -142,7 +158,7 @@ class FliCrudActivity : AppCompatActivity() {
         val id = txtId.text.toString().trim()
         if (id.isEmpty()) return
         util.showDialogCondition(this, getString(R.string.TextDeleteQuestion)) {
-            //FliViewModel.delete(id)
+            FliViewModel.delete(id)
             Toast.makeText(this, getString(R.string.TextDeleteSuccess), Toast.LENGTH_SHORT).show()
             finish()
         }
