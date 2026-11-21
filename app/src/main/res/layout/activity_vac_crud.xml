@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/main"
+    android:id="@+id/vac_main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:padding="16dp">
@@ -11,6 +11,7 @@
         android:orientation="vertical">
 
         <TextView
+            android:id="@+id/vac_txt_title"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/vac_title"
@@ -18,22 +19,22 @@
             android:textStyle="bold"
             android:paddingBottom="12dp" />
 
-        <EditText android:id="@+id/txtId" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="Cedula / ID" />
-        <EditText android:id="@+id/txtName" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="Nombre" />
-        <EditText android:id="@+id/txtFirstName" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="Primer Apellido" />
-        <EditText android:id="@+id/txtLastName" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="Segundo Apellido" />
-        <EditText android:id="@+id/txtPhone" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="Telefono" android:inputType="number" />
-        <EditText android:id="@+id/txtEmail" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="Email" android:inputType="textEmailAddress" />
-        <EditText android:id="@+id/txtAddress" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="Direccion" />
+        <EditText android:id="@+id/vac_txt_id" android:layout_width="match_parent" android:layout_height="wrap_content" android:inputType="text" />
+        <EditText android:id="@+id/vac_txt_name" android:layout_width="match_parent" android:layout_height="wrap_content" android:inputType="textPersonName" />
+        <EditText android:id="@+id/vac_txt_first_name" android:layout_width="match_parent" android:layout_height="wrap_content" android:inputType="textPersonName" />
+        <EditText android:id="@+id/vac_txt_last_name" android:layout_width="match_parent" android:layout_height="wrap_content" android:inputType="textPersonName" />
+        <EditText android:id="@+id/vac_txt_phone" android:layout_width="match_parent" android:layout_height="wrap_content" android:inputType="number" android:maxLength="8" />
+        <EditText android:id="@+id/vac_txt_email" android:layout_width="match_parent" android:layout_height="wrap_content" android:inputType="textEmailAddress" />
+        <EditText android:id="@+id/vac_txt_address" android:layout_width="match_parent" android:layout_height="wrap_content" android:inputType="textPostalAddress" />
 
-        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Tipo de Vacuna:" android:layout_marginTop="8dp"/>
-        <Spinner android:id="@+id/spnVaccineType" android:layout_width="match_parent" android:layout_height="wrap_content" />
+        <TextView android:id="@+id/vac_lbl_vaccine_type" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" />
+        <Spinner android:id="@+id/vac_spn_vaccine_type" android:layout_width="match_parent" android:layout_height="wrap_content" />
 
-        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Lugar:" android:layout_marginTop="8dp"/>
-        <EditText android:id="@+id/txtLocation" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="EBAIS / Hospital" />
+        <TextView android:id="@+id/vac_lbl_location" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" />
+        <Spinner android:id="@+id/vac_spn_location" android:layout_width="match_parent" android:layout_height="wrap_content" />
 
-        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Fecha y Hora (yyyy-MM-dd HH:mm):" android:layout_marginTop="8dp"/>
-        <EditText android:id="@+id/txtDateTime" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="2024-01-15 10:00" />
+        <TextView android:id="@+id/vac_lbl_date_time" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" />
+        <EditText android:id="@+id/vac_txt_date_time" android:layout_width="match_parent" android:layout_height="wrap_content" android:inputType="datetime" />
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -41,9 +42,9 @@
             android:orientation="horizontal"
             android:layout_marginTop="16dp">
 
-            <Button android:id="@+id/btnSave" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/TextSave" />
-            <Button android:id="@+id/btnDelete" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/TextDelete" />
-            <Button android:id="@+id/btnCancel" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/TextCancel" />
+            <Button android:id="@+id/vac_btn_save" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/TextSave" />
+            <Button android:id="@+id/vac_btn_delete" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/TextDelete" />
+            <Button android:id="@+id/vac_btn_cancel" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/TextCancel" />
         </LinearLayout>
     </LinearLayout>
 </ScrollView>
