@@ -95,15 +95,15 @@ class FliCrudActivity : AppCompatActivity() {
         val dateTimeStr = txtDateTime.text.toString().trim()
 
         if (id.isEmpty() || name.isEmpty() || flightNum.isEmpty()) {
-            Toast.makeText(this, "Por favor complete los campos requeridos.", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Please complete all required fields.", Toast.LENGTH_SHORT).show()
             return
         }
 
         val origin = spnOriginCountry.selectedItem as Country
         val dest = spnDestCountry.selectedItem as Country
 
-        if (origin != dest) {
-            Toast.makeText(this, "Origen y destino no pueden ser iguales.", Toast.LENGTH_SHORT).show()
+        if (origin == dest) {
+            Toast.makeText(this, "Origin and destination cannot be the same country.", Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -112,13 +112,13 @@ class FliCrudActivity : AppCompatActivity() {
 
         val flightRegex = Regex("""^[A-Z]{2}\d{4}$""")
         if (!flightRegex.matches(flightNum)) {
-            Toast.makeText(this, "Número de vuelo debe ser de formato AB1234.", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Flight number must be in AB1234 format.", Toast.LENGTH_SHORT).show()
             return
         }
 
         val dt = util.parseStringToDateTimeModern(dateTimeStr)
         if (dt == null || !dt.isAfter(LocalDateTime.now())) {
-            Toast.makeText(this, "La fecha de vuelo debe ser mayor a la fecha actual.", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Flight date and time must be in the future.", Toast.LENGTH_SHORT).show()
             return
         }
 
