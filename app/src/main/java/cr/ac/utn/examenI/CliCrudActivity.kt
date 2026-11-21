@@ -11,27 +11,28 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import cr.ac.utn.examenI.domain.model.Identifier
+import cr.ac.utn.examenI.domain.model.CliClient
 import cr.ac.utn.examenI.util.EXTRA_ID
 import cr.ac.utn.examenI.util.util
+import cr.ac.utn.examenI.viewmodel.CliViewModel
 
 class CliCrudActivity : AppCompatActivity() {
-    private lateinit var txtId: EditText
-    private lateinit var txtName: EditText
-    private lateinit var txtFirstName: EditText
-    private lateinit var txtLastName: EditText
-    private lateinit var txtPhone: EditText
-    private lateinit var txtEmail: EditText
-    private lateinit var txtAddress: EditText
-    private lateinit var txtCompanyName: EditText
-    private lateinit var txtCorporateId: EditText
-    private lateinit var txtProvince: EditText
-    private lateinit var txtCanton: EditText
-    private lateinit var txtDistrict: EditText
-    private lateinit var chkConsulting: CheckBox
-    private lateinit var chkSupport: CheckBox
-    private lateinit var chkDev: CheckBox
-    private lateinit var chkMaint: CheckBox
+    private lateinit var cli_txtId: EditText
+    private lateinit var cli_txtName: EditText
+    private lateinit var cli_txtFirstName: EditText
+    private lateinit var cli_txtLastName: EditText
+    private lateinit var cli_txtPhone: EditText
+    private lateinit var cli_txtEmail: EditText
+    private lateinit var cli_txtAddress: EditText
+    private lateinit var cli_txtCompanyName: EditText
+    private lateinit var cli_txtCorporateId: EditText
+    private lateinit var cli_txtProvince: EditText
+    private lateinit var cli_txtCanton: EditText
+    private lateinit var cli_txtDistrict: EditText
+    private lateinit var cli_chkConsulting: CheckBox
+    private lateinit var cli_chkSupport: CheckBox
+    private lateinit var cli_chkDev: CheckBox
+    private lateinit var cli_chkMaint: CheckBox
 
     private var currentId: String? = null
 
@@ -45,86 +46,119 @@ class CliCrudActivity : AppCompatActivity() {
             insets
         }
 
-        txtId = findViewById(R.id.txtId)
-        txtName = findViewById(R.id.txtName)
-        txtFirstName = findViewById(R.id.txtFirstName)
-        txtLastName = findViewById(R.id.txtLastName)
-        txtPhone = findViewById(R.id.txtPhone)
-        txtEmail = findViewById(R.id.txtEmail)
-        txtAddress = findViewById(R.id.txtAddress)
-        txtCompanyName = findViewById(R.id.txtCompanyName)
-        txtCorporateId = findViewById(R.id.txtCorporateId)
-        txtProvince = findViewById(R.id.txtProvince)
-        txtCanton = findViewById(R.id.txtCanton)
-        txtDistrict = findViewById(R.id.txtDistrict)
-        chkConsulting = findViewById(R.id.chkConsulting)
-        chkSupport = findViewById(R.id.chkSupport)
-        chkDev = findViewById(R.id.chkDev)
-        chkMaint = findViewById(R.id.chkMaint)
+        cli_txtId = findViewById(R.id.cli_txtId)
+        cli_txtName = findViewById(R.id.cli_txtName)
+        cli_txtFirstName = findViewById(R.id.cli_txtFirstName)
+        cli_txtLastName = findViewById(R.id.cli_txtLastName)
+        cli_txtPhone = findViewById(R.id.cli_txtPhone)
+        cli_txtEmail = findViewById(R.id.cli_txtEmail)
+        cli_txtAddress = findViewById(R.id.cli_txtAddress)
+        cli_txtCompanyName = findViewById(R.id.cli_txtCompanyName)
+        cli_txtCompanyName = findViewById(R.id.cli_txtCompanyName)
+        cli_txtCorporateId = findViewById(R.id.cli_txtCorporateId)
+        cli_txtProvince = findViewById(R.id.cli_txtProvince)
+        cli_txtCanton = findViewById(R.id.cli_txtCanton)
+        cli_txtDistrict = findViewById(R.id.cli_txtDistrict)
+        cli_chkConsulting = findViewById(R.id.cli_chkConsulting)
+        cli_chkSupport = findViewById(R.id.cli_chkSupport)
+        cli_chkDev = findViewById(R.id.cli_chkDev)
+        cli_chkMaint = findViewById(R.id.cli_chkMaint)
 
         currentId = intent.getStringExtra(EXTRA_ID)
         if (!currentId.isNullOrEmpty()) {
             loadExistingData(currentId!!)
         }
 
-        findViewById<Button>(R.id.btnSave).setOnClickListener { doSave() }
-        findViewById<Button>(R.id.btnDelete).setOnClickListener { doDelete() }
-        findViewById<Button>(R.id.btnCancel).setOnClickListener { finish() }
+        findViewById<Button>(R.id.cli_btnSave).setOnClickListener { doSave() }
+        findViewById<Button>(R.id.cli_btnDelete).setOnClickListener { doDelete() }
+        findViewById<Button>(R.id.cli_btnCancel).setOnClickListener { finish() }
     }
 
     private fun loadExistingData(id: String) {
-        /*val item = CliViewModel.getById(id) ?: return
-        txtId.setText(item.id)
-        txtId.isEnabled = false
-        txtName.setText(item.name)
-        txtFirstName.setText(item.firstName)
-        txtLastName.setText(item.lastName)
-        txtPhone.setText(item.phone.toString())
-        txtEmail.setText(item.email)
-        txtAddress.setText(item.address)
-        txtCompanyName.setText(item.companyName)
-        txtCorporateId.setText(item.corporateId)
-        txtProvince.setText(item.province)
-        txtCanton.setText(item.canton)
-        txtDistrict.setText(item.district)
+        val item = CliViewModel.getById(id) ?: return
+        cli_txtId.setText(item.id)
+        cli_txtId.isEnabled = false
+        cli_txtName.setText(item.name)
+        cli_txtFirstName.setText(item.firstName)
+        cli_txtLastName.setText(item.lastName)
+        cli_txtPhone.setText(item.phone.toString())
+        cli_txtEmail.setText(item.email)
+        cli_txtAddress.setText(item.address)
+        cli_txtCompanyName.setText(item.companyName)
+        cli_txtCorporateId.setText(item.corporateId)
+        cli_txtCorporateId.isEnabled = false
+        cli_txtProvince.setText(item.province)
+        cli_txtCanton.setText(item.canton)
+        cli_txtDistrict.setText(item.district)
 
-        chkConsulting.isChecked = item.services.contains("Consultoría")
-        chkSupport.isChecked = item.services.contains("Soporte")
-        chkDev.isChecked = item.services.contains("Desarrollo")
-        chkMaint.isChecked = item.services.contains("Mantenimiento")*/
+        cli_chkConsulting.isChecked = item.services.contains("Consultoría")
+        cli_chkSupport.isChecked = item.services.contains("Soporte")
+        cli_chkDev.isChecked = item.services.contains("Desarrollo")
+        cli_chkMaint.isChecked = item.services.contains("Mantenimiento")
     }
 
     private fun doSave() {
-        val id = txtId.text.toString().trim()
-        val companyName = txtCompanyName.text.toString().trim()
-        val corpId = txtCorporateId.text.toString().trim()
+        val id = cli_txtId.text.toString().trim()
+        val name = cli_txtName.text.toString().trim()
+        val firstName = cli_txtFirstName.text.toString().trim()
+        val lastName = cli_txtLastName.text.toString().trim()
+        val phoneStr = cli_txtPhone.text.toString().trim()
+        val email = cli_txtEmail.text.toString().trim()
+        val address = cli_txtAddress.text.toString().trim()
+        val companyName = cli_txtCompanyName.text.toString().trim()
+        val corporateId = cli_txtCorporateId.text.toString().trim()
+        val province = cli_txtProvince.text.toString().trim()
+        val canton = cli_txtCanton.text.toString().trim()
+        val district = cli_txtDistrict.text.toString().trim()
 
-        if (id.isEmpty() || companyName.isEmpty() || corpId.isEmpty()) {
-            Toast.makeText(this, "Por favor complete la identificación y datos de la empresa.", Toast.LENGTH_SHORT).show()
+        if (id.isEmpty() || name.isEmpty() || companyName.isEmpty() || corporateId.isEmpty()
+            || province.isEmpty() || canton.isEmpty() || district.isEmpty()) {
+            Toast.makeText(this, getString(R.string.TextSaveError), Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        if (!corporateId.matches(Regex("\\d{10}"))) {
+            Toast.makeText(this, getString(R.string.TextSaveError), Toast.LENGTH_SHORT).show()
             return
         }
 
         val selectedServices = mutableListOf<String>()
-        if (chkConsulting.isChecked) selectedServices.add("Consultoría")
-        if (chkSupport.isChecked) selectedServices.add("Soporte")
-        if (chkDev.isChecked) selectedServices.add("Desarrollo")
-        if (chkMaint.isChecked) selectedServices.add("Mantenimiento")
+        if (cli_chkConsulting.isChecked) selectedServices.add("Consultoría")
+        if (cli_chkSupport.isChecked) selectedServices.add("Soporte")
+        if (cli_chkDev.isChecked) selectedServices.add("Desarrollo")
+        if (cli_chkMaint.isChecked) selectedServices.add("Mantenimiento")
 
-        if (selectedServices.size > 0) {
-            Toast.makeText(this, "Debe seleccionar al menos un servicio", Toast.LENGTH_SHORT).show()
+        if (selectedServices.isEmpty()) {
+            Toast.makeText(this, getString(R.string.TextSaveError), Toast.LENGTH_SHORT).show()
             return
         }
 
+        val phone = phoneStr.toIntOrNull() ?: 0
 
+        val client = CliClient(
+            id = id,
+            name = name,
+            firstName = firstName,
+            lastName = lastName,
+            phone = phone,
+            email = email,
+            address = address,
+            companyName = companyName,
+            corporateId = corporateId,
+            province = province,
+            canton = canton,
+            district = district,
+            services = selectedServices
+        )
 
         if (currentId.isNullOrEmpty()) {
-            if (null != null) {
+            if (CliViewModel.existsByCorporateId(corporateId)) {
                 Toast.makeText(this, getString(R.string.TextDuplicateData), Toast.LENGTH_SHORT).show()
                 return
             }
-            //CliViewModel.save(item)
+            CliViewModel.add(client)
         } else {
-            //CliViewModel.update(item)
+            CliViewModel.update(client)
         }
 
         Toast.makeText(this, getString(R.string.TextSaveSuccess), Toast.LENGTH_SHORT).show()
@@ -132,10 +166,10 @@ class CliCrudActivity : AppCompatActivity() {
     }
 
     private fun doDelete() {
-        val id = txtId.text.toString().trim()
+        val id = cli_txtId.text.toString().trim()
         if (id.isEmpty()) return
         util.showDialogCondition(this, getString(R.string.TextDeleteQuestion)) {
-            //CliViewModel.delete(id)
+            CliViewModel.delete(id)
             Toast.makeText(this, getString(R.string.TextDeleteSuccess), Toast.LENGTH_SHORT).show()
             finish()
         }

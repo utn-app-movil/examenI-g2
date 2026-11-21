@@ -11,9 +11,10 @@ import androidx.recyclerview.widget.RecyclerView
 import cr.ac.utn.examenI.domain.model.Identifier
 import cr.ac.utn.examenI.util.EXTRA_ID
 import cr.ac.utn.examenI.util.util
+import cr.ac.utn.examenI.viewmodel.CliViewModel
 
 class CliListActivity : AppCompatActivity(), OnItemClickListener {
-    private lateinit var rvList: RecyclerView
+    private lateinit var cli_rvList: RecyclerView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -25,10 +26,10 @@ class CliListActivity : AppCompatActivity(), OnItemClickListener {
             insets
         }
 
-        rvList = findViewById(R.id.rvList)
-        rvList.layoutManager = LinearLayoutManager(this)
+        cli_rvList = findViewById(R.id.cli_rvList)
+        cli_rvList.layoutManager = LinearLayoutManager(this)
 
-        findViewById<Button>(R.id.btnAdd).setOnClickListener {
+        findViewById<Button>(R.id.cli_btnAdd).setOnClickListener {
             util.openActivity(this, CliCrudActivity::class.java)
         }
     }
@@ -39,8 +40,8 @@ class CliListActivity : AppCompatActivity(), OnItemClickListener {
     }
 
     private fun loadData() {
-        val items = emptyList<Identifier>().filter { it.id.startsWith("A") }
-        rvList.adapter = ListAdapter(items, this)
+        val items = CliViewModel.getAll()
+        cli_rvList.adapter = ListAdapter(items, this)
     }
 
     override fun onItemClick(obj: Identifier) {
