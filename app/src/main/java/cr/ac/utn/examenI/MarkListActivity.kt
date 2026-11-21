@@ -11,6 +11,7 @@ import androidx.recyclerview.widget.RecyclerView
 import cr.ac.utn.examenI.domain.model.Identifier
 import cr.ac.utn.examenI.util.EXTRA_ID
 import cr.ac.utn.examenI.util.util
+import cr.ac.utn.examenI.viewmodel.mark_ViewModel
 
 class MarkListActivity : AppCompatActivity(), OnItemClickListener {
     private lateinit var rvList: RecyclerView
@@ -39,8 +40,7 @@ class MarkListActivity : AppCompatActivity(), OnItemClickListener {
     }
 
     private fun loadData() {
-        val items = emptyList<Identifier>().filter { false }
-        rvList.adapter = ListAdapter(items, this)
+        rvList.adapter = ListAdapter(mark_ViewModel.getAll(), this)
     }
 
     override fun onItemClick(obj: Identifier) {
