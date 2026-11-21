@@ -45,5 +45,6 @@ class PayenListActivity : AppCompatActivity(), OnItemClickListener {
 
     override fun onItemClick(obj: Identifier) {
         util.openActivity(this, PayenCrudActivity::class.java, EXTRA_ID, "")
+
     }
 }
