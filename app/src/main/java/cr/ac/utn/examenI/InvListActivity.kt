@@ -11,6 +11,7 @@ import androidx.recyclerview.widget.RecyclerView
 import cr.ac.utn.examenI.domain.model.Identifier
 import cr.ac.utn.examenI.util.EXTRA_ID
 import cr.ac.utn.examenI.util.util
+import cr.ac.utn.examenI.viewmodel.InvViewModel
 
 class InvListActivity : AppCompatActivity(), OnItemClickListener {
     private lateinit var rvList: RecyclerView
@@ -38,10 +39,14 @@ class InvListActivity : AppCompatActivity(), OnItemClickListener {
         loadData()
     }
 
+
     private fun loadData() {
-        val items = emptyList<Identifier>().sortedByDescending { it.id }
+        val items = InvViewModel.getAll()
+            .sortedByDescending { it.entryDateTime }
+
         rvList.adapter = ListAdapter(items, this)
     }
+
 
     override fun onItemClick(obj: Identifier) {
         util.openActivity(this, InvCrudActivity::class.java, EXTRA_ID, obj.id)
