@@ -12,9 +12,10 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import cr.ac.utn.examenI.domain.model.Identifier
+import cr.ac.utn.examenI.domain.model.Rent
 import cr.ac.utn.examenI.util.EXTRA_ID
 import cr.ac.utn.examenI.util.util
+import cr.ac.utn.examenI.viewmodel.RentViewModel
 
 class RentCrudActivity : AppCompatActivity() {
     private lateinit var txtId: EditText
@@ -42,17 +43,17 @@ class RentCrudActivity : AppCompatActivity() {
             insets
         }
 
-        txtId = findViewById(R.id.txtId)
-        txtName = findViewById(R.id.txtName)
-        txtFirstName = findViewById(R.id.txtFirstName)
-        txtLastName = findViewById(R.id.txtLastName)
-        txtPhone = findViewById(R.id.txtPhone)
-        txtEmail = findViewById(R.id.txtEmail)
-        txtAddress = findViewById(R.id.txtAddress)
-        spnVehicleType = findViewById(R.id.spnVehicleType)
-        txtPlate = findViewById(R.id.txtPlate)
-        txtMileage = findViewById(R.id.txtMileage)
-        txtDriverLicense = findViewById(R.id.txtDriverLicense)
+        txtId = findViewById(R.id.rent_txtId)
+        txtName = findViewById(R.id.rent_txtName)
+        txtFirstName = findViewById(R.id.rent_txtFirstName)
+        txtLastName = findViewById(R.id.rent_txtLastName)
+        txtPhone = findViewById(R.id.rent_txtPhone)
+        txtEmail = findViewById(R.id.rent_txtEmail)
+        txtAddress = findViewById(R.id.rent_txtAddress)
+        spnVehicleType = findViewById(R.id.rent_spnVehicleType)
+        txtPlate = findViewById(R.id.rent_txtPlate)
+        txtMileage = findViewById(R.id.rent_txtMileage)
+        txtDriverLicense = findViewById(R.id.rent_txtDriverLicense)
 
         val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, vehicleTypes)
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
@@ -63,13 +64,13 @@ class RentCrudActivity : AppCompatActivity() {
             loadExistingData(currentId!!)
         }
 
-        findViewById<Button>(R.id.btnSave).setOnClickListener { doSave() }
-        findViewById<Button>(R.id.btnDelete).setOnClickListener { doDelete() }
-        findViewById<Button>(R.id.btnCancel).setOnClickListener { finish() }
+        findViewById<Button>(R.id.rent_btnSave).setOnClickListener { doSave() }
+        findViewById<Button>(R.id.rent_btnDelete).setOnClickListener { doDelete() }
+        findViewById<Button>(R.id.rent_btnCancel).setOnClickListener { finish() }
     }
 
     private fun loadExistingData(id: String) {
-        /*val item = RentViewModel.getById(id) ?: return
+        val item = RentViewModel.getById(id) ?: return
         txtId.setText(item.id)
         txtId.isEnabled = false
         txtName.setText(item.name)
@@ -82,42 +83,52 @@ class RentCrudActivity : AppCompatActivity() {
         if (pos >= 0) spnVehicleType.setSelection(pos)
         txtPlate.setText(item.plate)
         txtMileage.setText(item.mileage.toString())
-        txtDriverLicense.setText(item.driverLicense)*/
+        txtDriverLicense.setText(item.driverLicense)
     }
 
     private fun doSave() {
         val id = txtId.text.toString().trim()
         val name = txtName.text.toString().trim()
+        val firstName = txtFirstName.text.toString().trim()
+        val lastName = txtLastName.text.toString().trim()
+        val phoneStr = txtPhone.text.toString().trim()
+        val email = txtEmail.text.toString().trim()
+        val address = txtAddress.text.toString().trim()
+        val vehicleType = spnVehicleType.selectedItem.toString()
         val plate = txtPlate.text.toString().trim()
-        val license = txtDriverLicense.text.toString().trim()
+        val mileageStr = txtMileage.text.toString().trim()
+        val driverLicense = txtDriverLicense.text.toString().trim()
 
-        if (id.isEmpty() || name.isEmpty() || plate.isEmpty() || license.isEmpty()) {
-            Toast.makeText(this, "Por favor complete los campos requeridos.", Toast.LENGTH_SHORT).show()
+        if (id.isEmpty() || name.isEmpty() || plate.isEmpty() || driverLicense.isEmpty()) {
+            Toast.makeText(this, getString(R.string.TextSaveError), Toast.LENGTH_SHORT).show()
             return
         }
 
-        val fechaInicio = java.time.LocalDateTime.now()
-        val fechaFin = java.time.LocalDateTime.now().minusDays(5)
-        val rentalDays = java.time.Duration.between(fechaInicio, fechaFin).toDays()
-        val rentAmount = 100.0
-        val totalCost = rentalDays * rentAmount
+        val phone = phoneStr.toIntOrNull() ?: 0
+        val mileage = mileageStr.toDoubleOrNull() ?: 0.0
 
-        val deposit = 20.0
-        if (deposit < (rentAmount * 0.50)) {
-            Toast.makeText(this, "El depósito debe ser al menos el 10% del alquiler", Toast.LENGTH_SHORT).show()
-            return
-        }
-
-
+        val rentItem = Rent(
+            id = id,
+            name = name,
+            firstName = firstName,
+            lastName = lastName,
+            phone = phone,
+            email = email,
+            address = address,
+            vehicleType = vehicleType,
+            plate = plate,
+            mileage = mileage,
+            driverLicense = driverLicense
+        )
 
         if (currentId.isNullOrEmpty()) {
-            if ( null != null) {
+            if (RentViewModel.getById(id) != null) {
                 Toast.makeText(this, getString(R.string.TextDuplicateData), Toast.LENGTH_SHORT).show()
                 return
             }
-            //RentViewModel.save(item)
+            RentViewModel.save(rentItem)
         } else {
-            //RentViewModel.update(item)
+            RentViewModel.update(rentItem)
         }
 
         Toast.makeText(this, getString(R.string.TextSaveSuccess), Toast.LENGTH_SHORT).show()
@@ -128,7 +139,7 @@ class RentCrudActivity : AppCompatActivity() {
         val id = txtId.text.toString().trim()
         if (id.isEmpty()) return
         util.showDialogCondition(this, getString(R.string.TextDeleteQuestion)) {
-            //RentViewModel.delete(id)
+            RentViewModel.delete(id)
             Toast.makeText(this, getString(R.string.TextDeleteSuccess), Toast.LENGTH_SHORT).show()
             finish()
         }
