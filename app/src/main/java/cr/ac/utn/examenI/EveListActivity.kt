@@ -11,6 +11,7 @@ import androidx.recyclerview.widget.RecyclerView
 import cr.ac.utn.examenI.domain.model.Identifier
 import cr.ac.utn.examenI.util.EXTRA_ID
 import cr.ac.utn.examenI.util.util
+import cr.ac.utn.examenI.viewmodel.EveViewModel
 
 class EveListActivity : AppCompatActivity(), OnItemClickListener {
     private lateinit var rvList: RecyclerView
@@ -39,12 +40,12 @@ class EveListActivity : AppCompatActivity(), OnItemClickListener {
     }
 
     private fun loadData() {
-        val items = emptyList<Identifier>()
+        val items = EveViewModel.getAll()
         rvList.adapter = ListAdapter(items, this)
     }
 
     override fun onItemClick(obj: Identifier) {
         val position = 0
-        util.openActivity(this, EveCrudActivity::class.java, EXTRA_ID, position.toString())
+        util.openActivity(this, EveCrudActivity::class.java, EXTRA_ID, obj.id)
     }
 }
