@@ -15,8 +15,12 @@ import androidx.core.view.WindowInsetsCompat
 import cr.ac.utn.examenI.util.EXTRA_ID
 import cr.ac.utn.examenI.util.util
 import java.time.LocalDateTime
+import androidx.activity.viewModels
+import cr.ac.utn.examenI.viewmodel.LicViewModel
+import cr.ac.utn.examenI.domain.model.LicLicenseRenewal
 
 class LicCrudActivity : AppCompatActivity() {
+    private val licViewModel: LicViewModel by viewModels()
     private lateinit var txtId: EditText
     private lateinit var txtName: EditText
     private lateinit var txtFirstName: EditText
@@ -70,8 +74,10 @@ class LicCrudActivity : AppCompatActivity() {
         findViewById<Button>(R.id.btnCancel).setOnClickListener { finish() }
     }
 
+
     private fun loadExistingData(id: String) {
-        /*val item = LicViewModel.getById(id) ?: return
+        val item = licViewModel.getById(id) ?: return
+
         txtId.setText(item.id)
         txtId.isEnabled = false
         txtName.setText(item.name)
@@ -84,12 +90,20 @@ class LicCrudActivity : AppCompatActivity() {
         if (pos >= 0) spnLicenseType.setSelection(pos)
         txtMedicalCode.setText(item.medicalCode)
         txtScore.setText(item.score.toString())
-        txtDateTime.setText(util.formatDateTime(item.renewalDateTime))*/
+        txtDateTime.setText(util.formatDateTime(item.renewalDateTime))
     }
+
+
 
     private fun doSave() {
         val id = txtId.text.toString().trim()
         val name = txtName.text.toString().trim()
+        val firstName = txtFirstName.text.toString().trim()
+        val lastName = txtLastName.text.toString().trim()
+        val phone = txtPhone.text.toString().toIntOrNull() ?: 0
+        val email = txtEmail.text.toString().trim()
+        val address = txtAddress.text.toString().trim()
+        val licenseType = spnLicenseType.selectedItem.toString()
         val medCode = txtMedicalCode.text.toString().trim()
         val scoreVal = txtScore.text.toString().toIntOrNull() ?: 0
         val dateTimeStr = txtDateTime.text.toString().trim()
@@ -116,55 +130,98 @@ class LicCrudActivity : AppCompatActivity() {
             return
         }
 
-        val issueDt = dt
-        val expDt = dt
-        if (issueDt == expDt) {
-            Toast.makeText(this, "La fecha de vencimiento debe ser posterior a la de emisión", Toast.LENGTH_SHORT).show()
-            return
-        }
-
         if (dt.isAfter(LocalDateTime.now())) {
             Toast.makeText(this, "La fecha de renovación debe ser menor o igual a la actual.", Toast.LENGTH_SHORT).show()
             return
         }
 
-
+        val item = LicLicenseRenewal(
+            id = id,
+            name = name,
+            firstName = firstName,
+            lastName = lastName,
+            phone = phone,
+            email = email,
+            address = address,
+            licenseType = licenseType,
+            medicalCode = medCode,
+            score = scoreVal,
+            renewalDateTime = dt
+        )
 
         if (currentId.isNullOrEmpty()) {
-            if (null != null) {
-                Toast.makeText(this, getString(R.string.TextDuplicateData), Toast.LENGTH_SHORT).show()
+            if (licViewModel.getById(id) != null) {
+                Toast.makeText(
+                    this,
+                    getString(R.string.TextDuplicateData),
+                    Toast.LENGTH_SHORT
+                ).show()
                 return
             }
-            //LicViewModel.save(item)
-        } else {
-            //LicViewModel.update(item)
         }
 
-        Toast.makeText(this, getString(R.string.TextSaveSuccess), Toast.LENGTH_SHORT).show()
-        finish()
-    }
+        util.showDialogCondition(this, getString(R.string.TextSaveQuestion)) {
+            if (currentId.isNullOrEmpty()) {
+                licViewModel.save(item)
+            } else {
+                licViewModel.update(item)
+            }
 
-    private fun doDelete() {
-        val id = txtId.text.toString().trim()
-        if (id.isEmpty()) return
-        util.showDialogCondition(this, getString(R.string.TextDeleteQuestion)) {
-            //LicViewModel.delete(id)
-            Toast.makeText(this, getString(R.string.TextDeleteSuccess), Toast.LENGTH_SHORT).show()
+            Toast.makeText(
+                this,
+                getString(R.string.TextSaveSuccess),
+                Toast.LENGTH_SHORT
+            ).show()
+
             finish()
         }
     }
+
+
+
+    private fun doDelete() {
+        val id = txtId.text.toString().trim()
+
+        if (currentId.isNullOrEmpty()) {
+            return
+        }
+
+        util.showDialogCondition(this, getString(R.string.TextDeleteQuestion)) {
+            licViewModel.delete(id)
+
+            Toast.makeText(
+                this,
+                getString(R.string.TextDeleteSuccess),
+                Toast.LENGTH_SHORT
+            ).show()
+
+            finish()
+        }
+    }
+
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         menuInflater.inflate(R.menu.menu_crud, menu)
         return true
     }
 
+
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
-            R.id.mnu_save -> { doSave(); true }
-            R.id.mnu_delete -> { false }
-            R.id.mnu_cancel -> { finish(); true }
+            R.id.mnu_save -> {
+                doSave()
+                true
+            }
+            R.id.mnu_delete -> {
+                doDelete()
+                true
+            }
+            R.id.mnu_cancel -> {
+                finish()
+                true
+            }
             else -> super.onOptionsItemSelected(item)
         }
     }
+
 }
