@@ -11,6 +11,7 @@ import androidx.recyclerview.widget.RecyclerView
 import cr.ac.utn.examenI.domain.model.Identifier
 import cr.ac.utn.examenI.util.EXTRA_ID
 import cr.ac.utn.examenI.util.util
+import cr.ac.utn.examenI.viewmodel.EnsViewModel
 
 class EnsListActivity : AppCompatActivity(), OnItemClickListener {
     private lateinit var rvList: RecyclerView
@@ -19,26 +20,27 @@ class EnsListActivity : AppCompatActivity(), OnItemClickListener {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_ens_list)
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.ens_main)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
 
-        rvList = findViewById(R.id.rvList)
+        rvList = findViewById(R.id.ens_rvList)
         rvList.layoutManager = LinearLayoutManager(this)
 
-        findViewById<Button>(R.id.btnAdd).setOnClickListener {
+        findViewById<Button>(R.id.ens_btnAdd).setOnClickListener {
             util.openActivity(this, EnsCrudActivity::class.java)
         }
     }
 
     override fun onResume() {
         super.onResume()
+        loadData()
     }
 
     private fun loadData() {
-        val items = emptyList<Identifier>()
+        val items: List<Identifier> = EnsViewModel.getAll()
         rvList.adapter = ListAdapter(items, this)
     }
 
