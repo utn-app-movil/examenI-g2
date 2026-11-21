@@ -15,6 +15,8 @@ import androidx.core.view.WindowInsetsCompat
 import cr.ac.utn.examenI.util.EXTRA_ID
 import cr.ac.utn.examenI.util.util
 import java.time.LocalDateTime
+import cr.ac.utn.examenI.domain.model.EveEvent
+import cr.ac.utn.examenI.viewmodel.EveViewModel
 
 class EveCrudActivity : AppCompatActivity() {
     private lateinit var txtId: EditText
@@ -72,8 +74,9 @@ class EveCrudActivity : AppCompatActivity() {
         findViewById<Button>(R.id.btnCancel).setOnClickListener { finish() }
     }
 
+
     private fun loadExistingData(id: String) {
-        /*val item = EveViewModel.getById(id) ?: return
+        val item = EveViewModel.getById(id) ?: return
         txtId.setText(item.id)
         txtId.isEnabled = false
         txtName.setText(item.name)
@@ -86,61 +89,126 @@ class EveCrudActivity : AppCompatActivity() {
         txtVenue.setText(item.venue)
         txtSeatNum.setText(item.seatNumber)
         val pos = eventTypes.indexOf(item.eventType)
-        if (pos >= 0) spnEventType.setSelection(pos)
-        txtDateTime.setText(util.formatDateTime(item.eventDateTime))*/
+        if (pos >= 0) {
+            spnEventType.setSelection(pos)
+        }
+        txtDateTime.setText(
+            util.formatDateTime(item.eventDateTime)
+        )
     }
-
     private fun doSave() {
         val id = txtId.text.toString().trim()
         val name = txtName.text.toString().trim()
+        val firstName = txtFirstName.text.toString().trim()
+        val lastName = txtLastName.text.toString().trim()
+        val phone = txtPhone.text.toString().trim().toIntOrNull()
+        val email = txtEmail.text.toString().trim()
+        val address = txtAddress.text.toString().trim()
+        val institution = txtInstitution.text.toString().trim()
         val venue = txtVenue.text.toString().trim()
         val seat = txtSeatNum.text.toString().trim()
+        val eventType = spnEventType.selectedItem.toString()
 
-        if (id.isEmpty() || name.isEmpty() || venue.isEmpty() || seat.isEmpty()) {
-            Toast.makeText(this, "Por favor complete todos los campos requeridos.", Toast.LENGTH_SHORT).show()
+        val dt = util.parseStringToDateTimeModern(
+            txtDateTime.text.toString().trim()
+        )
+
+        if (id.isEmpty() || name.isEmpty() || firstName.isEmpty() || lastName.isEmpty() || phone == null || email.isEmpty() ||
+            address.isEmpty() || institution.isEmpty() || venue.isEmpty() || seat.isEmpty() || dt == null ||
+            seat.toIntOrNull() == null || seat.toInt() <= 0
+        ) {
+            Toast.makeText(
+                this,
+                getString(R.string.TextSaveError),
+                Toast.LENGTH_SHORT
+            ).show()
             return
         }
 
-        // Unique seat per event validation
-        val existingWithSeat = false //EveViewModel.getAll().any { it.venue.equals(venue, ignoreCase = true) && it.seatNumber.equals(seat, ignoreCase = true) && it.id != id }
+        val existingWithSeat = EveViewModel.getAll().any {
+            it.venue.equals(venue, ignoreCase = true) &&
+                    it.eventType == eventType &&
+                    it.eventDateTime == dt &&
+                    it.seatNumber == seat &&
+                    it.id != id
+        }
+
         if (existingWithSeat) {
-            Toast.makeText(this, "El número de asiento ya está ocupado para este evento/lugar.", Toast.LENGTH_SHORT).show()
+            Toast.makeText(
+                this,
+                getString(R.string.TextDuplicateData),
+                Toast.LENGTH_SHORT
+            ).show()
             return
         }
 
-        val dt = util.parseStringToDateTimeModern(txtDateTime.text.toString().trim()) ?: LocalDateTime.now()
-
-        val asistentes = seat.toIntOrNull() ?: 0
-        val capacidad = 100
-        if (asistentes > capacidad) {
-            Toast.makeText(this, "Aforo disponible", Toast.LENGTH_SHORT).show()
-        }
-
-
+        val event = EveEvent(
+            id = id,
+            name = name,
+            firstName = firstName,
+            lastName = lastName,
+            phone = phone,
+            email = email,
+            address = address,
+            institution = institution,
+            venue = venue,
+            seatNumber = seat,
+            eventType = eventType,
+            eventDateTime = dt
+        )
 
         if (currentId.isNullOrEmpty()) {
-            if (null != null) {
-                Toast.makeText(this, getString(R.string.TextDuplicateData), Toast.LENGTH_SHORT).show()
+            if (EveViewModel.getById(id) != null) {
+                Toast.makeText(
+                    this,
+                    getString(R.string.TextDuplicateData),
+                    Toast.LENGTH_SHORT
+                ).show()
                 return
             }
-            //EveViewModel.save(item)
-        } else {
-            //EveViewModel.update(item)
         }
 
-        Toast.makeText(this, getString(R.string.TextSaveSuccess), Toast.LENGTH_SHORT).show()
-        finish()
+        util.showDialogCondition(
+            this,
+            getString(R.string.TextSaveQuestion)
+        ) {
+            if (currentId.isNullOrEmpty()) {
+                EveViewModel.save(event)
+            } else {
+                EveViewModel.update(event)
+            }
+
+            Toast.makeText(
+                this,
+                getString(R.string.TextSaveSuccess),
+                Toast.LENGTH_SHORT
+            ).show()
+
+            finish()
+        }
     }
 
     private fun doDelete() {
         val id = txtId.text.toString().trim()
+
         if (id.isEmpty()) return
-        util.showDialogCondition(this, getString(R.string.TextDeleteQuestion)) {
-            //EveViewModel.delete(id)
-            Toast.makeText(this, getString(R.string.TextDeleteSuccess), Toast.LENGTH_SHORT).show()
+
+        util.showDialogCondition(
+            this,
+            getString(R.string.TextDeleteQuestion)
+        ) {
+            EveViewModel.delete(id)
+
+            Toast.makeText(
+                this,
+                getString(R.string.TextDeleteSuccess),
+                Toast.LENGTH_SHORT
+            ).show()
+
             finish()
         }
     }
+
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         menuInflater.inflate(R.menu.menu_crud, menu)
