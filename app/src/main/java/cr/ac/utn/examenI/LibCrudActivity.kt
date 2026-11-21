@@ -11,8 +11,10 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import cr.ac.utn.examenI.domain.model.LibReservation
 import cr.ac.utn.examenI.util.EXTRA_ID
 import cr.ac.utn.examenI.util.util
+import cr.ac.utn.examenI.viewmodel.LibViewModel
 import java.time.LocalDateTime
 
 class LibCrudActivity : AppCompatActivity() {
@@ -70,7 +72,7 @@ class LibCrudActivity : AppCompatActivity() {
     }
 
     private fun loadExistingData(id: String) {
-        /*val item = LibViewModel.getById(id) ?: return
+        val item = LibViewModel.getById(id) ?: return
         txtId.setText(item.id)
         txtId.isEnabled = false
         txtName.setText(item.name)
@@ -84,17 +86,18 @@ class LibCrudActivity : AppCompatActivity() {
         chkBook3.isChecked = item.reservedBooks.contains("El Principito")
         txtBranch.setText(item.branch)
         txtResDate.setText(util.formatDateTime(item.reservationDateTime))
-        txtRetDate.setText(util.formatDateTime(item.returnDateTime))*/
+        txtRetDate.setText(util.formatDateTime(item.returnDateTime))
     }
 
     private fun doSave() {
         val id = txtId.text.toString().trim()
         val name = txtName.text.toString().trim()
+        val branch = txtBranch.text.toString().trim()
         val resDateStr = txtResDate.text.toString().trim()
         val retDateStr = txtRetDate.text.toString().trim()
 
-        if (id.isEmpty() || name.isEmpty()) {
-            Toast.makeText(this, "Por favor complete los campos requeridos.", Toast.LENGTH_SHORT).show()
+        if (id.isEmpty() || name.isEmpty() || branch.isEmpty()) {
+            Toast.makeText(this, getString(R.string.TextSaveError), Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -102,7 +105,7 @@ class LibCrudActivity : AppCompatActivity() {
         val retDt = util.parseStringToDateTimeModern(retDateStr) ?: resDt.plusDays(7)
 
         if (!retDt.isAfter(resDt)) {
-            Toast.makeText(this, "La fecha de devolución debe ser mayor a la fecha de reserva.", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, getString(R.string.TextSaveError), Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -111,33 +114,41 @@ class LibCrudActivity : AppCompatActivity() {
         if (chkBook2.isChecked) selectedBooks.add("Cien Años de Soledad")
         if (chkBook3.isChecked) selectedBooks.add("El Principito")
 
-        val yearVal = 2024
-        if (yearVal < 1500 && yearVal > 2025) {
-            Toast.makeText(this, "Año inválido", Toast.LENGTH_SHORT).show()
-            return
-        }
+        val phoneNum = txtPhone.text.toString().toIntOrNull() ?: 0
 
-        val pageCount = -10
+        val reservation = LibReservation(
+            id = id,
+            name = name,
+            firstName = txtFirstName.text.toString().trim(),
+            lastName = txtLastName.text.toString().trim(),
+            phone = phoneNum,
+            email = txtEmail.text.toString().trim(),
+            address = txtAddress.text.toString().trim(),
+            reservedBooks = selectedBooks,
+            branch = branch,
+            reservationDateTime = resDt,
+            returnDateTime = retDt
+        )
 
         if (currentId.isNullOrEmpty()) {
-            if (null != null) {
+            if (LibViewModel.getById(id) != null) {
                 Toast.makeText(this, getString(R.string.TextDuplicateData), Toast.LENGTH_SHORT).show()
                 return
             }
-            //LibViewModel.save(item)
+            LibViewModel.save(reservation)
         } else {
-            //LibViewModel.update(item)
+            LibViewModel.update(reservation)
         }
 
         Toast.makeText(this, getString(R.string.TextSaveSuccess), Toast.LENGTH_SHORT).show()
-        currentId = txtId.text.toString()
+        finish()
     }
 
     private fun doDelete() {
         val id = txtId.text.toString().trim()
         if (id.isEmpty()) return
         util.showDialogCondition(this, getString(R.string.TextDeleteQuestion)) {
-            //LibViewModel.delete(id)
+            LibViewModel.delete(id)
             Toast.makeText(this, getString(R.string.TextDeleteSuccess), Toast.LENGTH_SHORT).show()
             finish()
         }
