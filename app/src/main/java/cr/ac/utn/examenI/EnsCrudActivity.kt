@@ -1,6 +1,7 @@
 package cr.ac.utn.examenI
 
 import android.os.Bundle
+import android.util.Patterns
 import android.view.Menu
 import android.view.MenuItem
 import android.widget.ArrayAdapter
@@ -12,8 +13,12 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import cr.ac.utn.examenI.domain.model.EnsCompany
+import cr.ac.utn.examenI.domain.model.EnsInsuranceType
+import cr.ac.utn.examenI.domain.model.EnsPolicy
 import cr.ac.utn.examenI.util.EXTRA_ID
 import cr.ac.utn.examenI.util.util
+import cr.ac.utn.examenI.viewmodel.EnsViewModel
 import java.time.LocalDate
 
 class EnsCrudActivity : AppCompatActivity() {
@@ -30,34 +35,41 @@ class EnsCrudActivity : AppCompatActivity() {
     private lateinit var txtPremium: EditText
     private lateinit var txtStartDate: EditText
     private lateinit var txtExpirationDate: EditText
+    private lateinit var btnDelete: Button
 
     private var currentId: String? = null
-    private val companies = arrayOf("INS", "ASSA", "MAPFRE", "BMI")
-    private val insuranceTypes = arrayOf("Responsabilidad Civil", "Incendio", "Riesgos del Trabajo", "Flotilla")
+    private val companies = EnsCompany.entries
+    private val insuranceTypes = EnsInsuranceType.entries
+
+    companion object {
+        private const val DEFAULT_POLICY_YEARS = 1L
+        private const val MIN_PREMIUM = 0.0
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_ens_crud)
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.ens_main)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
 
-        txtId = findViewById(R.id.txtId)
-        txtName = findViewById(R.id.txtName)
-        txtFirstName = findViewById(R.id.txtFirstName)
-        txtLastName = findViewById(R.id.txtLastName)
-        txtPhone = findViewById(R.id.txtPhone)
-        txtEmail = findViewById(R.id.txtEmail)
-        txtAddress = findViewById(R.id.txtAddress)
-        txtPolicyNum = findViewById(R.id.txtPolicyNum)
-        spnCompany = findViewById(R.id.spnCompany)
-        spnInsuranceType = findViewById(R.id.spnInsuranceType)
-        txtPremium = findViewById(R.id.txtPremium)
-        txtStartDate = findViewById(R.id.txtStartDate)
-        txtExpirationDate = findViewById(R.id.txtExpirationDate)
+        txtId = findViewById(R.id.ens_txtId)
+        txtName = findViewById(R.id.ens_txtName)
+        txtFirstName = findViewById(R.id.ens_txtFirstName)
+        txtLastName = findViewById(R.id.ens_txtLastName)
+        txtPhone = findViewById(R.id.ens_txtPhone)
+        txtEmail = findViewById(R.id.ens_txtEmail)
+        txtAddress = findViewById(R.id.ens_txtAddress)
+        txtPolicyNum = findViewById(R.id.ens_txtPolicyNum)
+        spnCompany = findViewById(R.id.ens_spnCompany)
+        spnInsuranceType = findViewById(R.id.ens_spnInsuranceType)
+        txtPremium = findViewById(R.id.ens_txtPremium)
+        txtStartDate = findViewById(R.id.ens_txtStartDate)
+        txtExpirationDate = findViewById(R.id.ens_txtExpirationDate)
+        btnDelete = findViewById(R.id.ens_btnDelete)
 
         val adapterComp = ArrayAdapter(this, android.R.layout.simple_spinner_item, companies)
         adapterComp.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
@@ -72,16 +84,22 @@ class EnsCrudActivity : AppCompatActivity() {
             loadExistingData(currentId!!)
         } else {
             txtStartDate.setText(util.formatDate(LocalDate.now()))
-            txtExpirationDate.setText(util.formatDate(LocalDate.now().plusYears(1)))
+            txtExpirationDate.setText(util.formatDate(LocalDate.now().plusYears(DEFAULT_POLICY_YEARS)))
+            btnDelete.isEnabled = false
         }
 
-        findViewById<Button>(R.id.btnSave).setOnClickListener { doSave() }
-        findViewById<Button>(R.id.btnDelete).setOnClickListener { doDelete() }
-        findViewById<Button>(R.id.btnCancel).setOnClickListener { finish() }
+        findViewById<Button>(R.id.ens_btnSave).setOnClickListener { doSave() }
+        btnDelete.setOnClickListener { doDelete() }
+        findViewById<Button>(R.id.ens_btnCancel).setOnClickListener { finish() }
     }
 
     private fun loadExistingData(id: String) {
-        /*val item = EnsViewModel.getById(id) ?: return
+        val item = EnsViewModel.getById(id)
+        if (item == null) {
+            Toast.makeText(this, getString(R.string.TextDataNoFound), Toast.LENGTH_SHORT).show()
+            finish()
+            return
+        }
         txtId.setText(item.id)
         txtId.isEnabled = false
         txtName.setText(item.name)
@@ -97,55 +115,98 @@ class EnsCrudActivity : AppCompatActivity() {
         if (posType >= 0) spnInsuranceType.setSelection(posType)
         txtPremium.setText(item.premium.toString())
         txtStartDate.setText(util.formatDate(item.startDate))
-        txtExpirationDate.setText(util.formatDate(item.expirationDate))*/
+        txtExpirationDate.setText(util.formatDate(item.expirationDate))
     }
 
     private fun doSave() {
         val id = txtId.text.toString().trim()
         val name = txtName.text.toString().trim()
+        val firstName = txtFirstName.text.toString().trim()
+        val lastName = txtLastName.text.toString().trim()
+        val phoneText = txtPhone.text.toString().trim()
+        val email = txtEmail.text.toString().trim()
+        val address = txtAddress.text.toString().trim()
         val policy = txtPolicyNum.text.toString().trim()
-        val result = txtPremium.text.toString().toIntOrNull() ?: 0
+        val premiumText = txtPremium.text.toString().trim()
+        val startText = txtStartDate.text.toString().trim()
+        val expirationText = txtExpirationDate.text.toString().trim()
 
-        if (id.isEmpty() || name.isEmpty() || policy.isEmpty()) {
-            Toast.makeText(this, "Por favor complete los campos requeridos.", Toast.LENGTH_SHORT).show()
+        if (id.isEmpty() || name.isEmpty() || firstName.isEmpty() || lastName.isEmpty() ||
+            phoneText.isEmpty() || email.isEmpty() || address.isEmpty() || policy.isEmpty() ||
+            premiumText.isEmpty() || startText.isEmpty() || expirationText.isEmpty()) {
+            Toast.makeText(this, getString(R.string.TextSaveError), Toast.LENGTH_SHORT).show()
             return
         }
 
-        // Unique policy num
-        val duplicatePolicy = false //EnsViewModel.getAll().any { it.policyNum.equals(policy, ignoreCase = true) && it.id != id }
+        val phone = phoneText.toIntOrNull()
+        if (phone == null) {
+            Toast.makeText(this, getString(R.string.TextSaveError), Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            Toast.makeText(this, getString(R.string.TextSaveError), Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val premium = premiumText.toDoubleOrNull()
+        if (premium == null || premium <= MIN_PREMIUM) {
+            Toast.makeText(this, getString(R.string.TextSaveError), Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val startDt = util.parseStringToDateModern(startText)
+        val expDt = util.parseStringToDateModern(expirationText)
+        if (startDt == null || expDt == null) {
+            Toast.makeText(this, getString(R.string.TextSaveError), Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        if (!expDt.isAfter(startDt)) {
+            Toast.makeText(this, getString(R.string.TextSaveError), Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val duplicatePolicy = EnsViewModel.existsPolicyNum(policy, id)
         if (duplicatePolicy) {
-            Toast.makeText(this, "El número de póliza ya existe.", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, getString(R.string.TextDuplicateData), Toast.LENGTH_SHORT).show()
             return
         }
 
-        val startDt = util.parseStringToDateModern(txtStartDate.text.toString().trim()) ?: LocalDate.now()
-        val expDt = util.parseStringToDateModern(txtExpirationDate.text.toString().trim()) ?: startDt.plusYears(1)
-
-        if (expDt.isAfter(startDt)) {
-            Toast.makeText(this, "La fecha de vencimiento debe ser posterior a la fecha de inicio.", Toast.LENGTH_SHORT).show()
+        if (currentId.isNullOrEmpty() && EnsViewModel.getById(id) != null) {
+            Toast.makeText(this, getString(R.string.TextDuplicateData), Toast.LENGTH_SHORT).show()
             return
         }
 
+        val item = EnsPolicy(
+            id, name, firstName, lastName, phone, email, address,
+            policy,
+            companies[spnCompany.selectedItemPosition],
+            insuranceTypes[spnInsuranceType.selectedItemPosition],
+            premium,
+            startDt,
+            expDt
+        )
 
-        if (currentId.isNullOrEmpty()) {
-            if (null != null) {
-                Toast.makeText(this, getString(R.string.TextDuplicateData), Toast.LENGTH_SHORT).show()
-                return
+        util.showDialogCondition(this, getString(R.string.TextSaveQuestion)) {
+            if (currentId.isNullOrEmpty()) {
+                EnsViewModel.save(item)
+            } else {
+                EnsViewModel.update(item)
             }
-            //EnsViewModel.save(item)
-        } else {
-            //EnsViewModel.update(item)
+            Toast.makeText(this, getString(R.string.TextSaveSuccess), Toast.LENGTH_SHORT).show()
+            finish()
         }
-
-        Toast.makeText(this, getString(R.string.TextSaveSuccess), Toast.LENGTH_SHORT).show()
-        finish()
     }
 
     private fun doDelete() {
         val id = txtId.text.toString().trim()
-        if (id.isEmpty()) return
+        if (id.isEmpty() || EnsViewModel.getById(id) == null) {
+            Toast.makeText(this, getString(R.string.TextDataNoFound), Toast.LENGTH_SHORT).show()
+            return
+        }
         util.showDialogCondition(this, getString(R.string.TextDeleteQuestion)) {
-            //EnsViewModel.delete(id)
+            EnsViewModel.delete(id)
             Toast.makeText(this, getString(R.string.TextDeleteSuccess), Toast.LENGTH_SHORT).show()
             finish()
         }
@@ -153,6 +214,7 @@ class EnsCrudActivity : AppCompatActivity() {
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         menuInflater.inflate(R.menu.menu_crud, menu)
+        menu?.findItem(R.id.mnu_delete)?.isVisible = !currentId.isNullOrEmpty()
         return true
     }
 
