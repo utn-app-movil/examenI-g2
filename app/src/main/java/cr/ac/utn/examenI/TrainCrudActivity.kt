@@ -15,6 +15,8 @@ import cr.ac.utn.examenI.domain.model.Identifier
 import cr.ac.utn.examenI.util.EXTRA_ID
 import cr.ac.utn.examenI.util.util
 import java.time.LocalDateTime
+import cr.ac.utn.examenI.domain.model.Train
+import cr.ac.utn.examenI.viewmodel.TrainViewModel
 
 class TrainCrudActivity : AppCompatActivity() {
     private lateinit var txtId: EditText
@@ -67,11 +69,35 @@ class TrainCrudActivity : AppCompatActivity() {
         findViewById<Button>(R.id.btnCancel).setOnClickListener { finish() }
     }
 
+
     private fun loadExistingData(id: String) {
-        txtId.setText(id)
+        val train_item = TrainViewModel.train_getById(id)
+
+        if (train_item == null) {
+            Toast.makeText(this, "No se encontró el registro.", Toast.LENGTH_SHORT).show()
+            finish()
+            return
+        }
+
+        txtId.setText(train_item.id)
+        txtName.setText(train_item.name)
+        txtFirstName.setText(train_item.firstName)
+        txtLastName.setText(train_item.lastName)
+        txtPhone.setText(train_item.phone.toString())
+        txtEmail.setText(train_item.email)
+        txtAddress.setText(train_item.address)
+
+        chkKotlin.isChecked = train_item.train_courses.contains("Kotlin")
+        chkAndroid.isChecked = train_item.train_courses.contains("Android Studio")
+        chkGit.isChecked = train_item.train_courses.contains("Git")
+        chkScrum.isChecked = train_item.train_courses.contains("Scrum")
+
+        txtDateTime.setText(util.formatDateTime(train_item.train_trainingDate))
+
         txtId.isEnabled = false
-        findViewById<Button>(R.id.btnDelete).isEnabled = false
+        findViewById<Button>(R.id.btnDelete).isEnabled = true
     }
+
 
     private fun doSave() {
         val id = txtId.text.toString().trim()
@@ -83,48 +109,66 @@ class TrainCrudActivity : AppCompatActivity() {
             return
         }
 
-        val score = 85
-        if (score > 70) {
-            Toast.makeText(this, "La nota mínima de aprobación es 70", Toast.LENGTH_SHORT).show()
+        val train_phone = txtPhone.text.toString().trim().toIntOrNull()
+
+        if (train_phone == null) {
+            Toast.makeText(this, "Ingrese un teléfono válido.", Toast.LENGTH_SHORT).show()
             return
         }
 
-        val txtHours = txtPhone
-        val hours = txtHours.text.toString().length
-
         val dt = util.parseStringToDateTimeModern(dateTimeStr)
-        if (dt == null || dt.isBefore(LocalDateTime.now().minusMinutes(5))) {
+
+        if (dt == null || dt.isBefore(LocalDateTime.now())) {
             Toast.makeText(this, "La fecha de capacitación debe ser mayor o igual a la actual.", Toast.LENGTH_SHORT).show()
             return
         }
 
-        val selectedCourses = mutableListOf<String>()
-        if (chkKotlin.isChecked) selectedCourses.add("Kotlin")
-        if (chkAndroid.isChecked) selectedCourses.add("Android Studio")
-        if (chkGit.isChecked) selectedCourses.add("Git")
-        if (chkScrum.isChecked) selectedCourses.add("Scrum")
+        val train_courses = mutableListOf<String>()
 
+        if (chkKotlin.isChecked) train_courses.add("Kotlin")
+        if (chkAndroid.isChecked) train_courses.add("Android Studio")
+        if (chkGit.isChecked) train_courses.add("Git")
+        if (chkScrum.isChecked) train_courses.add("Scrum")
 
+        if (train_courses.isEmpty()) {
+            Toast.makeText(this, "Seleccione al menos un curso.", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val train_item = Train(
+            id = id,
+            name = name,
+            firstName = txtFirstName.text.toString().trim(),
+            lastName = txtLastName.text.toString().trim(),
+            phone = train_phone,
+            email = txtEmail.text.toString().trim(),
+            address = txtAddress.text.toString().trim(),
+            train_courses = train_courses,
+            train_trainingDate = dt
+        )
 
         if (currentId.isNullOrEmpty()) {
-            if (null != null) {
+            if (TrainViewModel.train_getById(id) != null) {
                 Toast.makeText(this, getString(R.string.TextDuplicateData), Toast.LENGTH_SHORT).show()
                 return
             }
-            //TrainViewModel.save(item)
+
+            TrainViewModel.train_save(train_item)
         } else {
-            //TrainViewModel.update(item)
+            TrainViewModel.train_update(train_item)
         }
+
 
         Toast.makeText(this, getString(R.string.TextSaveSuccess), Toast.LENGTH_SHORT).show()
         finish()
     }
 
+
     private fun doDelete() {
         val id = txtId.text.toString().trim()
         if (id.isEmpty()) return
         util.showDialogCondition(this, getString(R.string.TextDeleteQuestion)) {
-            //TrainViewModel.delete(id)
+            TrainViewModel.train_delete(id)
             Toast.makeText(this, getString(R.string.TextDeleteSuccess), Toast.LENGTH_SHORT).show()
             finish()
         }
