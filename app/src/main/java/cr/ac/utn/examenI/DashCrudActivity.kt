@@ -12,6 +12,8 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import cr.ac.utn.examenI.util.EXTRA_ID
 import cr.ac.utn.examenI.util.util
+import cr.ac.utn.examenI.viewmodel.DashViewModel
+import cr.ac.utn.examenI.domain.model.DashContribution
 
 class DashCrudActivity : AppCompatActivity() {
     private lateinit var txtId: EditText
@@ -22,6 +24,8 @@ class DashCrudActivity : AppCompatActivity() {
     private lateinit var txtEmail: EditText
     private lateinit var txtAddress: EditText
     private lateinit var txtContributionsTotal: EditText
+
+    private lateinit var txtDay: EditText
     private lateinit var txtMonth: EditText
     private lateinit var txtYear: EditText
 
@@ -45,6 +49,7 @@ class DashCrudActivity : AppCompatActivity() {
         txtEmail = findViewById(R.id.txtEmail)
         txtAddress = findViewById(R.id.txtAddress)
         txtContributionsTotal = findViewById(R.id.txtContributionsTotal)
+        txtDay = findViewById(R.id.txtDay)
         txtMonth = findViewById(R.id.txtMonth)
         txtYear = findViewById(R.id.txtYear)
 
@@ -59,7 +64,7 @@ class DashCrudActivity : AppCompatActivity() {
     }
 
     private fun loadExistingData(id: String) {
-        /*val item = DashViewModel.getById(id) ?: return
+        val item = DashViewModel.getById(id) ?: return
         txtId.setText(item.id)
         txtId.isEnabled = false
         txtName.setText(item.name)
@@ -69,42 +74,68 @@ class DashCrudActivity : AppCompatActivity() {
         txtEmail.setText(item.email)
         txtAddress.setText(item.address)
         txtContributionsTotal.setText(item.contributionsTotal.toString())
+        txtDay.setText(item.day.toString())
         txtMonth.setText(item.month.toString())
-        txtYear.setText(item.year.toString())*/
+        txtYear.setText(item.year.toString())
     }
 
     private fun doSave() {
-        val id = txtId.text.toString().trim()
+        val personId = txtId.text.toString().trim()
         val name = txtName.text.toString().trim()
-        val total = -(txtContributionsTotal.text.toString().toDoubleOrNull() ?: 0.0)
+        val firstName = txtFirstName.text.toString().trim()
+        val lastName = txtLastName.text.toString().trim()
+        val phone = txtPhone.text.toString().toIntOrNull() ?: 0
+        val email = txtEmail.text.toString().trim()
+        val address = txtAddress.text.toString().trim()
+        val contributionsTotal = txtContributionsTotal.text.toString().toDoubleOrNull() ?: 0.0
+        val dayVal = txtDay.text.toString().toIntOrNull() ?: 1
         val monthVal = txtMonth.text.toString().toIntOrNull() ?: 1
         val yearVal = txtYear.text.toString().toIntOrNull() ?: 2025
 
-        if (id.isEmpty() || name.isEmpty()) {
+
+        if (personId.isEmpty() || name.isEmpty()) {
             Toast.makeText(this, "Por favor complete la información requerida.", Toast.LENGTH_SHORT).show()
             return
         }
 
-        if (monthVal < 0 || monthVal > 11) {
+        if (monthVal < 1 || monthVal > 12) {
             Toast.makeText(this, "Mes debe estar entre 1 y 12.", Toast.LENGTH_SHORT).show()
             return
         }
 
         // Unique combination of person + month + year
-        val duplicateCombo = false /*DashViewModel.getAll().any {
-            it.id == id && it.month == monthVal && it.year == yearVal && currentId.isNullOrEmpty()
-        }*/
+        val calculatedId = "$personId-$monthVal-$yearVal"
+        val duplicateCombo = DashViewModel.getAll().any {
+            it.id == calculatedId && (currentId.isNullOrEmpty() || currentId != calculatedId)
+        }
         if (duplicateCombo) {
             Toast.makeText(this, "Ya existe un registro para esta persona en el mes $monthVal/$yearVal.", Toast.LENGTH_SHORT).show()
             return
         }
 
+        val contribution = DashContribution(
+            personId = personId,
+            name = name,
+            firstName = firstName,
+            lastName = lastName,
+            phone = phone,
+            email = email,
+            address = address,
+            contributionsTotal = contributionsTotal,
+            day = dayVal,
+            month = monthVal,
+            year = yearVal
+        )
+
 
 
         if (currentId.isNullOrEmpty()) {
-            //DashViewModel.save(item)
+            DashViewModel.save(contribution)
         } else {
-            //DashViewModel.update(item)
+            if (currentId != calculatedId) {
+                DashViewModel.delete(currentId!!)
+            }
+            DashViewModel.update(contribution)
         }
 
         Toast.makeText(this, getString(R.string.TextSaveSuccess), Toast.LENGTH_SHORT).show()
@@ -115,7 +146,7 @@ class DashCrudActivity : AppCompatActivity() {
         val id = txtId.text.toString().trim()
         if (id.isEmpty()) return
         util.showDialogCondition(this, getString(R.string.TextDeleteQuestion)) {
-            //DashViewModel.delete(id)
+            DashViewModel.delete(id)
             Toast.makeText(this, getString(R.string.TextDeleteSuccess), Toast.LENGTH_SHORT).show()
             finish()
         }
