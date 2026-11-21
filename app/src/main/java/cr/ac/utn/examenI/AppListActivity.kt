@@ -12,7 +12,8 @@ import cr.ac.utn.examenI.domain.model.Identifier
 import cr.ac.utn.examenI.util.EXTRA_ID
 import cr.ac.utn.examenI.util.util
 
-class AppListActivity : AppCompatActivity(), OnItemClickListener {
+class
+AppListActivity : AppCompatActivity(), OnItemClickListener {
     private lateinit var rvList: RecyclerView
 
     override fun onCreate(savedInstanceState: Bundle?) {
