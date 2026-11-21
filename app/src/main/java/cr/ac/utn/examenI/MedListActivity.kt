@@ -11,6 +11,7 @@ import androidx.recyclerview.widget.RecyclerView
 import cr.ac.utn.examenI.domain.model.Identifier
 import cr.ac.utn.examenI.util.EXTRA_ID
 import cr.ac.utn.examenI.util.util
+import cr.ac.utn.examenI.viewmodel.MedViewModel
 
 class MedListActivity : AppCompatActivity(), OnItemClickListener {
     private lateinit var rvList: RecyclerView
@@ -39,11 +40,10 @@ class MedListActivity : AppCompatActivity(), OnItemClickListener {
     }
 
     private fun loadData() {
-        val items = emptyList<Identifier>()
-        rvList.adapter = ListAdapter(items, this)
+        rvList.adapter = MedListAdapter(MedViewModel.getAll(), this)
     }
 
     override fun onItemClick(obj: Identifier) {
-        util.openActivity(this, MedCrudActivity::class.java, EXTRA_ID, "")
+        util.openActivity(this, MedCrudActivity::class.java, EXTRA_ID, obj.id)
     }
 }

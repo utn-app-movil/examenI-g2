@@ -1,18 +1,22 @@
 package cr.ac.utn.examenI
 
+import android.app.DatePickerDialog
+import android.app.TimePickerDialog
 import android.os.Bundle
+import android.util.Patterns
 import android.view.Menu
 import android.view.MenuItem
 import android.widget.Button
-import android.widget.CheckBox
 import android.widget.EditText
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import cr.ac.utn.examenI.domain.model.MedCheckup
 import cr.ac.utn.examenI.util.EXTRA_ID
 import cr.ac.utn.examenI.util.util
+import cr.ac.utn.examenI.viewmodel.MedViewModel
 import java.time.LocalDateTime
 
 class MedCrudActivity : AppCompatActivity() {
@@ -23,10 +27,10 @@ class MedCrudActivity : AppCompatActivity() {
     private lateinit var txtPhone: EditText
     private lateinit var txtEmail: EditText
     private lateinit var txtAddress: EditText
-    private lateinit var txtBP: EditText
+    private lateinit var txtBloodPressure: EditText
     private lateinit var txtWeight: EditText
     private lateinit var txtHeight: EditText
-    private lateinit var txtOxygen: EditText
+    private lateinit var txtOxygenation: EditText
     private lateinit var txtDateTime: EditText
 
     private var currentId: String? = null
@@ -48,11 +52,15 @@ class MedCrudActivity : AppCompatActivity() {
         txtPhone = findViewById(R.id.txtPhone)
         txtEmail = findViewById(R.id.txtEmail)
         txtAddress = findViewById(R.id.txtAddress)
-        txtBP = findViewById(R.id.txtBP)
+        txtBloodPressure = findViewById(R.id.txtBP)
         txtWeight = findViewById(R.id.txtWeight)
         txtHeight = findViewById(R.id.txtHeight)
-        txtOxygen = findViewById(R.id.txtOxygen)
+        txtOxygenation = findViewById(R.id.txtOxygen)
         txtDateTime = findViewById(R.id.txtDateTime)
+
+        txtDateTime.isFocusableInTouchMode = false
+        txtDateTime.isFocusable = false
+        txtDateTime.setOnClickListener { showDateTimePicker() }
 
         currentId = intent.getStringExtra(EXTRA_ID)
         if (!currentId.isNullOrEmpty()) {
@@ -67,72 +75,160 @@ class MedCrudActivity : AppCompatActivity() {
     }
 
     private fun loadExistingData(id: String) {
-        /*val item = MedViewModel.getById(id) ?: return
+        val item = MedViewModel.getById(id)
+        if (item == null) {
+            showMessage(R.string.TextDataNoFound)
+            finish()
+            return
+        }
         txtId.setText(item.id)
         txtId.isEnabled = false
         txtName.setText(item.name)
         txtFirstName.setText(item.firstName)
         txtLastName.setText(item.lastName)
-        txtPhone.setText(item.phone.toString())
+        txtPhone.setText(if (item.phone == 0) "" else item.phone.toString())
         txtEmail.setText(item.email)
         txtAddress.setText(item.address)
-        txtBP.setText(item.bloodPressure)
+        txtBloodPressure.setText(item.bloodPressure)
         txtWeight.setText(item.weight.toString())
         txtHeight.setText(item.height.toString())
-        txtOxygen.setText(item.oxygenation.toString())
-        txtDateTime.setText(util.formatDateTime(item.checkDateTime))*/
+        txtOxygenation.setText(item.oxygenation.toString())
+        txtDateTime.setText(util.formatDateTime(item.checkDateTime))
+    }
+
+    private fun showDateTimePicker() {
+        val current = util.parseStringToDateTimeModern(txtDateTime.text.toString().trim())
+            ?: LocalDateTime.now()
+        DatePickerDialog(
+            this,
+            { _, year, month, day ->
+                TimePickerDialog(
+                    this,
+                    { _, hour, minute ->
+                        val selected = LocalDateTime.of(year, month + 1, day, hour, minute)
+                        txtDateTime.setText(util.formatDateTime(selected))
+                    },
+                    current.hour,
+                    current.minute,
+                    true
+                ).show()
+            },
+            current.year,
+            current.monthValue - 1,
+            current.dayOfMonth
+        ).show()
+    }
+
+    private fun buildCheckup(): MedCheckup? {
+        val id = txtId.text.toString().trim()
+        val name = txtName.text.toString().trim()
+        val bloodPressure = txtBloodPressure.text.toString().trim()
+        val weightText = txtWeight.text.toString().trim()
+        val heightText = txtHeight.text.toString().trim()
+        val oxygenationText = txtOxygenation.text.toString().trim()
+        val dateTimeText = txtDateTime.text.toString().trim()
+
+        if (id.isEmpty() || name.isEmpty() || bloodPressure.isEmpty() || weightText.isEmpty() ||
+            heightText.isEmpty() || oxygenationText.isEmpty() || dateTimeText.isEmpty()
+        ) {
+            return rejectData()
+        }
+
+        if (!BLOOD_PRESSURE_REGEX.matches(bloodPressure)) {
+            return rejectData()
+        }
+        val pressures = bloodPressure.split("/").map { it.toInt() }
+        if (pressures[0] <= pressures[1]) {
+            return rejectData()
+        }
+
+        val weight = parseDecimal(weightText)
+        if (weight == null || weight <= 0.0) {
+            return rejectData()
+        }
+
+        val height = parseDecimal(heightText)
+        if (height == null || height <= 0.0) {
+            return rejectData()
+        }
+
+        val oxygenation = parseDecimal(oxygenationText)
+        if (oxygenation == null || oxygenation <= 0.0 || oxygenation > 100.0) {
+            return rejectData()
+        }
+
+        val phoneText = txtPhone.text.toString().trim()
+        val phone: Int? = if (phoneText.isEmpty()) 0 else phoneText.toIntOrNull()
+        if (phone == null || phone < 0) {
+            return rejectData()
+        }
+
+        val email = txtEmail.text.toString().trim()
+        if (email.isNotEmpty() && !Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            return rejectData()
+        }
+
+        val dateTime = util.parseStringToDateTimeModern(dateTimeText)
+        if (dateTime == null) {
+            return rejectData()
+        }
+
+        return MedCheckup(
+            id = id,
+            name = name,
+            firstName = txtFirstName.text.toString().trim(),
+            lastName = txtLastName.text.toString().trim(),
+            phone = phone,
+            email = email,
+            address = txtAddress.text.toString().trim(),
+            bloodPressure = bloodPressure,
+            weight = weight,
+            height = height,
+            oxygenation = oxygenation,
+            checkDateTime = dateTime
+        )
     }
 
     private fun doSave() {
-        val id = txtId.text.toString().trim()
-        val name = txtName.text.toString().trim()
-        val bp = txtBP.text.toString().trim()
-        val dateTimeStr = txtDateTime.text.toString().trim()
-
-        val intervalHours = 0
-        val dailyDoses = 24 / intervalHours
-
-        val chkPrescription = CheckBox(this)
-        val isPrescriptionRequired = !chkPrescription.isChecked
-
-        if (id.isEmpty() || name.isEmpty() || bp.isEmpty()) {
-            Toast.makeText(this, "Por favor complete los campos requeridos.", Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        // Validate Blood Pressure format 120/80
-        val bpRegex = Regex("""^\d{2,3}/\d{2,3}$""")
-        if (!bpRegex.matches(bp)) {
-            Toast.makeText(this, "Formato de presión arterial debe ser 120/80.", Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        val dt = util.parseStringToDateTimeModern(dateTimeStr) ?: LocalDateTime.now()
-
-
+        val item = buildCheckup() ?: return
 
         if (currentId.isNullOrEmpty()) {
-            if (null != null) {
-                Toast.makeText(this, getString(R.string.TextDuplicateData), Toast.LENGTH_SHORT).show()
+            if (MedViewModel.getById(item.id) != null) {
+                showMessage(R.string.TextDuplicateData)
                 return
             }
-            //MedViewModel.save(item)
+            MedViewModel.save(item)
         } else {
-            //MedViewModel.update(item)
+            MedViewModel.update(item)
         }
 
-        Toast.makeText(this, getString(R.string.TextSaveSuccess), Toast.LENGTH_SHORT).show()
+        showMessage(R.string.TextSaveSuccess)
         finish()
     }
 
     private fun doDelete() {
         val id = txtId.text.toString().trim()
         if (id.isEmpty()) return
+        if (MedViewModel.getById(id) == null) {
+            showMessage(R.string.TextDataNoFound)
+            return
+        }
         util.showDialogCondition(this, getString(R.string.TextDeleteQuestion)) {
-            //MedViewModel.delete(id)
-            Toast.makeText(this, getString(R.string.TextDeleteSuccess), Toast.LENGTH_SHORT).show()
+            MedViewModel.delete(id)
+            showMessage(R.string.TextDeleteSuccess)
             finish()
         }
+    }
+
+    private fun parseDecimal(text: String): Double? = text.replace(',', '.').toDoubleOrNull()
+
+    private fun rejectData(): MedCheckup? {
+        showMessage(R.string.TextSaveError)
+        return null
+    }
+
+    private fun showMessage(messageId: Int) {
+        Toast.makeText(this, messageId, Toast.LENGTH_SHORT).show()
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
@@ -147,5 +243,9 @@ class MedCrudActivity : AppCompatActivity() {
             R.id.mnu_cancel -> { finish(); true }
             else -> super.onOptionsItemSelected(item)
         }
+    }
+
+    private companion object {
+        val BLOOD_PRESSURE_REGEX = Regex("""^\d{2,3}/\d{2,3}$""")
     }
 }
