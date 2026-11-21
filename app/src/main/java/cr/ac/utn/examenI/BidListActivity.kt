@@ -3,6 +3,7 @@ package cr.ac.utn.examenI
 import android.os.Bundle
 import android.widget.Button
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -11,9 +12,11 @@ import androidx.recyclerview.widget.RecyclerView
 import cr.ac.utn.examenI.domain.model.Identifier
 import cr.ac.utn.examenI.util.EXTRA_ID
 import cr.ac.utn.examenI.util.util
+import cr.ac.utn.examenI.viewmodel.Bid_ViewModel
 
 class BidListActivity : AppCompatActivity(), OnItemClickListener {
-    private lateinit var rvList: RecyclerView
+    private lateinit var bid_rvList: RecyclerView
+    private val bid_viewModel: Bid_ViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -25,8 +28,8 @@ class BidListActivity : AppCompatActivity(), OnItemClickListener {
             insets
         }
 
-        rvList = findViewById(R.id.rvList)
-        rvList.layoutManager = LinearLayoutManager(this)
+        bid_rvList = findViewById(R.id.rvList)
+        bid_rvList.layoutManager = LinearLayoutManager(this)
 
         findViewById<Button>(R.id.btnAdd).setOnClickListener {
             util.openActivity(this, BidCrudActivity::class.java)
@@ -39,8 +42,8 @@ class BidListActivity : AppCompatActivity(), OnItemClickListener {
     }
 
     private fun loadData() {
-        val items = emptyList<Identifier>()
-        rvList.adapter = ListAdapter(items, this)
+        val items = bid_viewModel.getAll()
+        bid_rvList.adapter = ListAdapter(items, this)
     }
 
     override fun onItemClick(obj: Identifier) {
