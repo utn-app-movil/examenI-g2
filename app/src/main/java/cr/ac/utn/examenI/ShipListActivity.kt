@@ -3,6 +3,7 @@ package cr.ac.utn.examenI
 import android.os.Bundle
 import android.widget.Button
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -11,8 +12,10 @@ import androidx.recyclerview.widget.RecyclerView
 import cr.ac.utn.examenI.domain.model.Identifier
 import cr.ac.utn.examenI.util.EXTRA_ID
 import cr.ac.utn.examenI.util.util
+import cr.ac.utn.examenI.viewmodel.ship_MaintenanceViewModel
 
 class ShipListActivity : AppCompatActivity(), OnItemClickListener {
+    private val viewModel: ship_MaintenanceViewModel by viewModels()
     private lateinit var rvList: RecyclerView
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -39,11 +42,10 @@ class ShipListActivity : AppCompatActivity(), OnItemClickListener {
     }
 
     private fun loadData() {
-        val items = emptyList<Identifier>()
-        rvList.adapter = ListAdapter(items, this)
+        rvList.adapter = ListAdapter(viewModel.getAll(), this)
     }
 
     override fun onItemClick(obj: Identifier) {
-        util.openActivity(this, ShipCrudActivity::class.java, EXTRA_ID, (obj as cr.ac.utn.examenI.domain.model.Person).name)
+        util.openActivity(this, ShipCrudActivity::class.java, EXTRA_ID, obj.id)
     }
 }
