@@ -1,3 +1,4 @@
+
 package cr.ac.utn.examenI
 
 import android.os.Bundle
@@ -11,11 +12,14 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import cr.ac.utn.examenI.domain.model.PhaPatient
+import cr.ac.utn.examenI.viewmodel.PhaViewModel
 import cr.ac.utn.examenI.util.EXTRA_ID
 import cr.ac.utn.examenI.util.util
 import java.time.LocalDateTime
 
 class PhaCrudActivity : AppCompatActivity() {
+
     private lateinit var txtId: EditText
     private lateinit var txtName: EditText
     private lateinit var txtFirstName: EditText
@@ -35,9 +39,15 @@ class PhaCrudActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_pha_crud)
+
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
+            v.setPadding(
+                systemBars.left,
+                systemBars.top,
+                systemBars.right,
+                systemBars.bottom
+            )
             insets
         }
 
@@ -55,21 +65,29 @@ class PhaCrudActivity : AppCompatActivity() {
         txtDateTime = findViewById(R.id.txtDateTime)
 
         currentId = intent.getStringExtra(EXTRA_ID)
+
         if (!currentId.isNullOrEmpty()) {
             loadExistingData(currentId!!)
         } else {
             txtDateTime.setText(util.formatDateTime(LocalDateTime.now()))
         }
 
-        findViewById<Button>(R.id.btnSave).setOnClickListener { doSave() }
-        findViewById<Button>(R.id.btnDelete).setOnClickListener { doDelete() }
-        findViewById<Button>(R.id.btnCancel).setOnClickListener { finish() }
+        findViewById<Button>(R.id.btnSave).setOnClickListener {
+            doSave()
+        }
+
+        findViewById<Button>(R.id.btnDelete).setOnClickListener {
+            doDelete()
+        }
+
+        findViewById<Button>(R.id.btnCancel).setOnClickListener {
+            finish()
+        }
     }
 
     private fun loadExistingData(id: String) {
-        txtId.setText(id)
-        txtId.isEnabled = true
-        /*val item = PhaViewModel.getById(id) ?: return
+        val item = PhaViewModel.getById(id) ?: return
+
         txtId.setText(item.id)
         txtId.isEnabled = false
         txtName.setText(item.name)
@@ -78,69 +96,119 @@ class PhaCrudActivity : AppCompatActivity() {
         txtPhone.setText(item.phone.toString())
         txtEmail.setText(item.email)
         txtAddress.setText(item.address)
-        chkCrema.isChecked = item.medicines.contains("Crema")
-        chkPastillas.isChecked = item.medicines.contains("Pastillas")
-        chkJarabe.isChecked = item.medicines.contains("Jarabe")
+
+        chkCrema.isChecked = item.medicines.contains("Cream")
+        chkPastillas.isChecked = item.medicines.contains("Pills")
+        chkJarabe.isChecked = item.medicines.contains("Syrup")
+
         txtTotalAmount.setText(item.totalAmount.toString())
-        txtDateTime.setText(util.formatDateTime(item.purchaseDateTime))*/
+        txtDateTime.setText(util.formatDateTime(item.purchaseDateTime))
     }
 
     private fun doSave() {
         val id = txtId.text.toString().trim()
         val name = txtName.text.toString().trim()
-        val totalAmt = txtTotalAmount.text.toString().toDoubleOrNull() ?: 0.0
+        val firstName = txtFirstName.text.toString().trim()
+        val lastName = txtLastName.text.toString().trim()
+        val phone = txtPhone.text.toString().trim().toIntOrNull()
+
+        if (phone == null) {
+            showSaveError(R.string.TextSaveError)
+            return
+        }
+        val email = txtEmail.text.toString().trim()
+        val address = txtAddress.text.toString().trim()
+        val totalAmount = txtTotalAmount.text.toString().toDoubleOrNull()
         val dateTimeStr = txtDateTime.text.toString().trim()
 
-        val dt = util.parseStringToDateTimeModern(dateTimeStr)
-        val expDt = dt ?: LocalDateTime.now()
-        if (expDt.isAfter(LocalDateTime.now())) {
-            Toast.makeText(this, "El medicamento está vencido", Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        val temp = 5
-        if (temp < 2 && temp > 8) {
-            Toast.makeText(this, "Temperatura fuera de rango (2-8°C)", Toast.LENGTH_SHORT).show()
-            return
-        }
-
         if (id.isEmpty() || name.isEmpty()) {
-            Toast.makeText(this, "Por favor complete los campos requeridos.", Toast.LENGTH_SHORT).show()
+            showSaveError(R.string.TextSaveError)
             return
         }
 
-        if (dt == null || dt.isAfter(LocalDateTime.now())) {
-            Toast.makeText(this, "La fecha de compra debe ser menor o igual a la actual.", Toast.LENGTH_SHORT).show()
+        if (totalAmount == null || totalAmount < 0) {
+            showSaveError(R.string.TextSaveError)
             return
         }
 
-        val selectedMeds = mutableListOf<String>()
-        if (chkCrema.isChecked) selectedMeds.add("Crema")
-        if (chkPastillas.isChecked) selectedMeds.add("Pastillas")
-        if (chkJarabe.isChecked) selectedMeds.add("Jarabe")
+        val dateTime = util.parseStringToDateTimeModern(dateTimeStr)
 
+        if (dateTime == null || dateTime.isAfter(LocalDateTime.now())) {
+            showSaveError(R.string.TextSaveError)
+            return
+        }
 
+        val medicines = mutableListOf<String>()
+
+        if (chkCrema.isChecked) medicines.add("Cream")
+        if (chkPastillas.isChecked) medicines.add("Pills")
+        if (chkJarabe.isChecked) medicines.add("Syrup")
+
+        if (medicines.isEmpty()) {
+            showSaveError(R.string.TextSaveError)
+            return
+        }
+
+        val item = PhaPatient(
+            id = id,
+            name = name,
+            firstName = firstName,
+            lastName = lastName,
+            phone = phone,
+            email = email,
+            address = address,
+            medicines = medicines,
+            totalAmount = totalAmount,
+            purchaseDateTime = dateTime
+        )
 
         if (currentId.isNullOrEmpty()) {
-            if (null != null) {
-                Toast.makeText(this, getString(R.string.TextDuplicateData), Toast.LENGTH_SHORT).show()
+            if (PhaViewModel.getById(id) != null) {
+                Toast.makeText(
+                    this,
+                    getString(R.string.TextDuplicateData),
+                    Toast.LENGTH_SHORT
+                ).show()
                 return
             }
-            //PhaViewModel.save(item)
+
+            PhaViewModel.save(item)
         } else {
-            //PhaViewModel.update(item)
+            PhaViewModel.update(item)
         }
 
-        Toast.makeText(this, getString(R.string.TextSaveSuccess), Toast.LENGTH_SHORT).show()
+        Toast.makeText(
+            this,
+            getString(R.string.TextSaveSuccess),
+            Toast.LENGTH_SHORT
+        ).show()
+
         finish()
     }
 
+    private fun showSaveError(message: Int) {
+        Toast.makeText(
+            this,
+            getString(message),
+            Toast.LENGTH_SHORT
+        ).show()
+    }
+
     private fun doDelete() {
-        val id = txtId.text.toString().trim()
-        if (id.isEmpty()) return
-        util.showDialogCondition(this, getString(R.string.TextDeleteQuestion)) {
-            //PhaViewModel.delete(id)
-            Toast.makeText(this, getString(R.string.TextDeleteSuccess), Toast.LENGTH_SHORT).show()
+        val id = currentId ?: return
+
+        util.showDialogCondition(
+            this,
+            getString(R.string.TextDeleteQuestion)
+        ) {
+            PhaViewModel.delete(id)
+
+            Toast.makeText(
+                this,
+                getString(R.string.TextDeleteSuccess),
+                Toast.LENGTH_SHORT
+            ).show()
+
             finish()
         }
     }
@@ -152,9 +220,21 @@ class PhaCrudActivity : AppCompatActivity() {
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
-            R.id.mnu_save -> { doSave(); true }
-            R.id.mnu_delete -> { doDelete(); true }
-            R.id.mnu_cancel -> { finish(); true }
+            R.id.mnu_save -> {
+                doSave()
+                true
+            }
+
+            R.id.mnu_delete -> {
+                doDelete()
+                true
+            }
+
+            R.id.mnu_cancel -> {
+                finish()
+                true
+            }
+
             else -> super.onOptionsItemSelected(item)
         }
     }
