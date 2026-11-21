@@ -11,6 +11,7 @@ import androidx.recyclerview.widget.RecyclerView
 import cr.ac.utn.examenI.domain.model.Identifier
 import cr.ac.utn.examenI.util.EXTRA_ID
 import cr.ac.utn.examenI.util.util
+import cr.ac.utn.examenI.viewmodel.PayenViewModel
 
 class PayenListActivity : AppCompatActivity(), OnItemClickListener {
     private lateinit var rvList: RecyclerView
@@ -19,16 +20,16 @@ class PayenListActivity : AppCompatActivity(), OnItemClickListener {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_payen_list)
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.payen_main)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
 
-        rvList = findViewById(R.id.rvList)
+        rvList = findViewById(R.id.payen_rvList)
         rvList.layoutManager = LinearLayoutManager(this)
 
-        findViewById<Button>(R.id.btnAdd).setOnClickListener {
+        findViewById<Button>(R.id.payen_btnAdd).setOnClickListener {
             util.openActivity(this, PayenCrudActivity::class.java)
         }
     }
@@ -39,11 +40,11 @@ class PayenListActivity : AppCompatActivity(), OnItemClickListener {
     }
 
     private fun loadData() {
-        val items = emptyList<Identifier>()
+        val items: List<Identifier> = PayenViewModel.getAll()
         rvList.adapter = ListAdapter(items, this)
     }
 
     override fun onItemClick(obj: Identifier) {
-        util.openActivity(this, PayenCrudActivity::class.java, EXTRA_ID, "")
+        util.openActivity(this, PayenCrudActivity::class.java, EXTRA_ID, obj.id)
     }
 }
