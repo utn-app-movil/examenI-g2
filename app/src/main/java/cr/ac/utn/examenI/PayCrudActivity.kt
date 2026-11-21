@@ -12,9 +12,11 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import cr.ac.utn.examenI.domain.model.PayPerson
 import cr.ac.utn.examenI.util.EXTRA_ID
 import cr.ac.utn.examenI.util.util
 import java.time.LocalDate
+import cr.ac.utn.examenI.viewmodel.PayViewModel
 
 class PayCrudActivity : AppCompatActivity() {
     private lateinit var txtId: EditText
@@ -32,7 +34,7 @@ class PayCrudActivity : AppCompatActivity() {
     private lateinit var spnBank: Spinner
 
     private var currentId: String? = null
-    private val banks = arrayOf("BAC", "Banco Nacional", "Banco de Costa Rica")
+    private val banks = arrayOf("BAC Credomatic", "Banco Nacional", "Banco de Costa Rica","Banco Popular","Davivienda")
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -75,38 +77,41 @@ class PayCrudActivity : AppCompatActivity() {
     }
 
     private fun loadExistingData(id: String) {
-        /*val item = PayViewModel.getById(id) ?: return
+        val item = PayViewModel.getById(id) ?: return
         txtId.setText(item.id)
         txtId.isEnabled = false
         txtName.setText(item.name)
         txtFirstName.setText(item.firstName)
         txtLastName.setText(item.lastName)
-        txtPhone.setText(item.phone.toString())
+        txtPhone.setText(if (item.phone > 0) item.phone.toString() else "")
         txtEmail.setText(item.email)
         txtAddress.setText(item.address)
         txtEmployeeNum.setText(item.employeeNum)
         txtPosition.setText(item.position)
-        txtSalary.setText(item.salary.toString())
+        txtSalary.setText(if (item.salary > 0.0) item.salary.toString() else "")
         txtIban.setText(item.iban)
         txtMonth.setText(item.month.toString())
         val pos = banks.indexOf(item.bank)
-        if (pos >= 0) spnBank.setSelection(pos)*/
+        if (pos >= 0) spnBank.setSelection(pos)
     }
 
     private fun doSave() {
         val id = txtId.text.toString().trim()
         val name = txtName.text.toString().trim()
+        val firstName = txtFirstName.text.toString().trim()
+        val lastName = txtLastName.text.toString().trim()
+        val phone = txtPhone.text.toString().toIntOrNull() ?: 0
+        val email = txtEmail.text.toString().trim()
+        val address = txtAddress.text.toString().trim()
         val empNum = txtEmployeeNum.text.toString().trim()
+        val position = txtPosition.text.toString().trim()
+        val salary = txtSalary.text.toString().toDoubleOrNull() ?: 0.0
         val ibanStr = txtIban.text.toString().trim().uppercase()
-        val monthVal = txtMonth.text.toString().toIntOrNull() ?: 1
+        val monthVal = txtMonth.text.toString().toIntOrNull() ?: 0
+        val selectedBank = spnBank.selectedItem?.toString() ?: ""
 
-        val grossSalary = txtSalary.text.toString().toDoubleOrNull() ?: 0.0
-        val deductions = 5000.0
-        val netSalary = grossSalary + deductions
-
-        val extraHours = 5
-        if (extraHours > 0) {
-            Toast.makeText(this, "Las horas extra deben ser mayores o iguales a 0", Toast.LENGTH_SHORT).show()
+        if (id.isEmpty() || name.isEmpty() || empNum.isEmpty() || position.isEmpty() || salary <= 0.0 || ibanStr.isEmpty() || selectedBank.isEmpty()) {
+            Toast.makeText(this, "Por favor complete todos los campos requeridos.", Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -115,29 +120,47 @@ class PayCrudActivity : AppCompatActivity() {
             return
         }
 
-        // Validate IBAN format (e.g., ^[A-Z]{2}\d{15,28}$)
-        val ibanRegex = Regex("""^[A-Z]{2}\d{15,28}$""")
+        // Validación oficial IBAN de Costa Rica (CR + 20 dígitos = 22 caracteres) o formato internacional ([A-Z]{2}\d{15,30})
+        val ibanRegex = Regex("^CR\\d{20}$", RegexOption.IGNORE_CASE)
         if (!ibanRegex.matches(ibanStr)) {
-            Toast.makeText(this, "Formato de IBAN inválido (debe iniciar con código de país y dígitos).", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "El número de cuenta IBAN debe tener el formato oficial de Costa Rica (ej. CR05015201001026295059).", Toast.LENGTH_LONG).show()
             return
         }
 
         val currentMonth = LocalDate.now().monthValue
-        if (monthVal < 1 || monthVal > currentMonth) {
-            Toast.makeText(this, "El mes debe ser menor o igual al mes actual ($currentMonth).", Toast.LENGTH_SHORT).show()
+        if (monthVal < 1 || monthVal > 12) {
+            Toast.makeText(this, "El mes del pago debe ser un mes válido (1-12).", Toast.LENGTH_SHORT).show()
+            return
+        }
+        if (monthVal > currentMonth) {
+            Toast.makeText(this, "El mes del pago ($monthVal) no puede ser mayor al mes actual ($currentMonth).", Toast.LENGTH_SHORT).show()
             return
         }
 
-
+        val item = PayPerson(
+            id = id,
+            name = name,
+            firstName = firstName,
+            lastName = lastName,
+            phone = phone,
+            email = email,
+            address = address,
+            employeeNum = empNum,
+            position = position,
+            salary = salary,
+            iban = ibanStr,
+            month = monthVal,
+            bank = selectedBank
+        )
 
         if (currentId.isNullOrEmpty()) {
-            if (null != null) {
+            if (PayViewModel.getById(id) != null) {
                 Toast.makeText(this, getString(R.string.TextDuplicateData), Toast.LENGTH_SHORT).show()
                 return
             }
-            //PayViewModel.save(item)
+            PayViewModel.save(item)
         } else {
-            //PayViewModel.update(item)
+            PayViewModel.update(item)
         }
 
         Toast.makeText(this, getString(R.string.TextSaveSuccess), Toast.LENGTH_SHORT).show()
@@ -148,8 +171,9 @@ class PayCrudActivity : AppCompatActivity() {
         val id = txtId.text.toString().trim()
         if (id.isEmpty()) return
         util.showDialogCondition(this, getString(R.string.TextDeleteQuestion)) {
-            //PayViewModel.delete(id)
+            PayViewModel.delete(id)
             Toast.makeText(this, getString(R.string.TextDeleteSuccess), Toast.LENGTH_SHORT).show()
+            finish()
         }
     }
 
