@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/main"
+    android:id="@+id/notif_main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:padding="16dp">
 
     <TextView
+        android:id="@+id/notif_tvTitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="@string/notif_title"
@@ -15,13 +16,13 @@
         android:paddingBottom="8dp" />
 
     <Button
-        android:id="@+id/btnAdd"
+        android:id="@+id/notif_btnAdd"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="@string/text_add_new" />
 
     <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rvList"
+        android:id="@+id/notif_rvList"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"

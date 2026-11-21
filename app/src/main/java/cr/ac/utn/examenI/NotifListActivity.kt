@@ -9,6 +9,7 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import cr.ac.utn.examenI.domain.model.Identifier
+import cr.ac.utn.examenI.notif.NotifController
 import cr.ac.utn.examenI.util.EXTRA_ID
 import cr.ac.utn.examenI.util.util
 
@@ -19,17 +20,17 @@ class NotifListActivity : AppCompatActivity(), OnItemClickListener {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_notif_list)
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
-            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.notif_main)) { v, insets ->
+        val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
 
-        rvList = findViewById(R.id.rvList)
+        rvList = findViewById(R.id.notif_rvList)
         rvList.layoutManager = LinearLayoutManager(this)
 
-        findViewById<Button>(R.id.btnAdd).setOnClickListener {
-            util.openActivity(this, NotifListActivity::class.java)
+        findViewById<Button>(R.id.notif_btnAdd).setOnClickListener {
+            util.openActivity(this, NotifCrudActivity::class.java)
         }
     }
 
@@ -39,8 +40,7 @@ class NotifListActivity : AppCompatActivity(), OnItemClickListener {
     }
 
     private fun loadData() {
-        val items = emptyList<Identifier>()
-        rvList.adapter = ListAdapter(items, this)
+        rvList.adapter = ListAdapter(NotifController.getAll(), this)
     }
 
     override fun onItemClick(obj: Identifier) {
