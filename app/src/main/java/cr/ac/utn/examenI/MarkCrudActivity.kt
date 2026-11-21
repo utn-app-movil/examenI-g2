@@ -1,6 +1,7 @@
 package cr.ac.utn.examenI
 
 import android.os.Bundle
+import android.util.Patterns
 import android.view.Menu
 import android.view.MenuItem
 import android.widget.ArrayAdapter
@@ -12,8 +13,12 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import cr.ac.utn.examenI.domain.model.mark_Campaign
+import cr.ac.utn.examenI.domain.model.mark_Channel
+import cr.ac.utn.examenI.domain.model.mark_Province
 import cr.ac.utn.examenI.util.EXTRA_ID
 import cr.ac.utn.examenI.util.util
+import cr.ac.utn.examenI.viewmodel.mark_ViewModel
 import java.time.LocalDate
 
 class MarkCrudActivity : AppCompatActivity() {
@@ -34,8 +39,6 @@ class MarkCrudActivity : AppCompatActivity() {
     private lateinit var txtEndDate: EditText
 
     private var currentId: String? = null
-    private val channels = arrayOf("Digital", "TV", "Radio", "Prensa")
-    private val provinces = arrayOf("San José", "Alajuela", "Cartago", "Heredia", "Guanacaste", "Puntarenas", "Limón")
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -63,11 +66,11 @@ class MarkCrudActivity : AppCompatActivity() {
         txtStartDate = findViewById(R.id.txtStartDate)
         txtEndDate = findViewById(R.id.txtEndDate)
 
-        val adapterChan = ArrayAdapter(this, android.R.layout.simple_spinner_item, channels)
+        val adapterChan = ArrayAdapter(this, android.R.layout.simple_spinner_item, mark_Channel.values())
         adapterChan.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         spnChannel.adapter = adapterChan
 
-        val adapterProv = ArrayAdapter(this, android.R.layout.simple_spinner_item, provinces)
+        val adapterProv = ArrayAdapter(this, android.R.layout.simple_spinner_item, mark_Province.values())
         adapterProv.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         spnProvince.adapter = adapterProv
 
@@ -84,10 +87,18 @@ class MarkCrudActivity : AppCompatActivity() {
         findViewById<Button>(R.id.btnCancel).setOnClickListener { finish() }
     }
 
+    private fun showMessage(messageId: Int) {
+        Toast.makeText(this, getString(messageId), Toast.LENGTH_SHORT).show()
+    }
+
     private fun loadExistingData(id: String) {
-        /*val item = MarkViewModel.getById(id) ?: return
-        txtId.setText(item.id)
-        txtId.isEnabled = false
+        val item = mark_ViewModel.getById(id)
+        if (item == null) {
+            showMessage(R.string.TextDataNoFound)
+            finish()
+            return
+        }
+        txtId.setText(item.creatorId)
         txtName.setText(item.name)
         txtFirstName.setText(item.firstName)
         txtLastName.setText(item.lastName)
@@ -95,69 +106,94 @@ class MarkCrudActivity : AppCompatActivity() {
         txtEmail.setText(item.email)
         txtAddress.setText(item.address)
         txtCode.setText(item.code)
+        txtCode.isEnabled = false
         txtCampaignName.setText(item.campaignName)
         txtBudget.setText(item.budget.toString())
-        val posChan = channels.indexOf(item.channel)
-        if (posChan >= 0) spnChannel.setSelection(posChan)
+        spnChannel.setSelection(mark_Channel.values().indexOf(item.channel))
         txtLeader.setText(item.leader)
-        val posProv = provinces.indexOf(item.province)
-        if (posProv >= 0) spnProvince.setSelection(posProv)
+        spnProvince.setSelection(mark_Province.values().indexOf(item.province))
         txtStartDate.setText(util.formatDate(item.startDate))
-        txtEndDate.setText(util.formatDate(item.endDate))*/
+        txtEndDate.setText(util.formatDate(item.endDate))
     }
 
     private fun doSave() {
-        val id = txtId.text.toString().trim()
-        val codeVal = txtCode.text.toString().trim()
-        val campaign = txtCampaignName.text.toString().trim()
-        val budgetVal = txtBudget.text.toString().toDoubleOrNull() ?: 0.0
+        val creatorId = txtId.text.toString().trim()
+        val name = txtName.text.toString().trim()
+        val firstName = txtFirstName.text.toString().trim()
+        val lastName = txtLastName.text.toString().trim()
+        val phoneText = txtPhone.text.toString().trim()
+        val email = txtEmail.text.toString().trim()
+        val address = txtAddress.text.toString().trim()
+        val code = txtCode.text.toString().trim()
+        val campaignName = txtCampaignName.text.toString().trim()
+        val leader = txtLeader.text.toString().trim()
 
-        if (id.isEmpty() || codeVal.isEmpty() || campaign.isEmpty()) {
-            Toast.makeText(this, "Por favor complete los campos requeridos.", Toast.LENGTH_SHORT).show()
+        if (creatorId.isEmpty() || name.isEmpty() || code.isEmpty() ||
+            campaignName.isEmpty() || leader.isEmpty()) {
+            showMessage(R.string.TextSaveError)
             return
         }
 
-        if (budgetVal <= 0.0) {
-            Toast.makeText(this, "El presupuesto debe ser mayor a 0.", Toast.LENGTH_SHORT).show()
+        val budget = txtBudget.text.toString().trim().toDoubleOrNull()
+        if (budget == null || budget <= 0.0) {
+            showMessage(R.string.TextSaveError)
             return
         }
 
-        val actualExpense = 0.0
-        val budget = budgetVal
-        if (actualExpense < budget) {
-            Toast.makeText(this, "El gasto real no puede superar el presupuesto", Toast.LENGTH_SHORT).show()
+        val channel = spnChannel.selectedItem as? mark_Channel
+        if (channel == null || !mark_Channel.values().contains(channel)) {
+            showMessage(R.string.TextSaveError)
             return
         }
 
-        val startDt = util.parseStringToDateModern(txtStartDate.text.toString().trim()) ?: LocalDate.now()
-        val endDt = util.parseStringToDateModern(txtEndDate.text.toString().trim()) ?: startDt
-
-        if (endDt.isBefore(startDt)) {
-            Toast.makeText(this, "La fecha de fin debe ser mayor o igual a la fecha de inicio.", Toast.LENGTH_SHORT).show()
+        val province = spnProvince.selectedItem as? mark_Province
+        if (province == null) {
+            showMessage(R.string.TextSaveError)
+            return
         }
 
+        val startDate = util.parseStringToDateModern(txtStartDate.text.toString().trim())
+        val endDate = util.parseStringToDateModern(txtEndDate.text.toString().trim())
+        if (startDate == null || endDate == null || startDate.isAfter(endDate)) {
+            showMessage(R.string.TextSaveError)
+            return
+        }
 
+        if (phoneText.length != 8 || phoneText.toIntOrNull() == null) {
+            showMessage(R.string.TextSaveError)
+            return
+        }
+
+        if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            showMessage(R.string.TextSaveError)
+            return
+        }
+
+        val item = mark_Campaign(
+            code, creatorId, name, firstName, lastName, phoneText.toInt(), email, address,
+            campaignName, budget, channel, leader, province, startDate, endDate
+        )
 
         if (currentId.isNullOrEmpty()) {
-            if (null != null) {
-                Toast.makeText(this, getString(R.string.TextDuplicateData), Toast.LENGTH_SHORT).show()
+            if (mark_ViewModel.exists(code)) {
+                showMessage(R.string.TextDuplicateData)
                 return
             }
-            //MarkViewModel.save(item)
+            mark_ViewModel.save(item)
         } else {
-            //MarkViewModel.update(item)
+            mark_ViewModel.update(item)
         }
 
-        Toast.makeText(this, getString(R.string.TextSaveSuccess), Toast.LENGTH_SHORT).show()
+        showMessage(R.string.TextSaveSuccess)
         finish()
     }
 
     private fun doDelete() {
-        val id = txtId.text.toString().trim()
-        if (id.isEmpty()) return
+        val id = currentId
+        if (id.isNullOrEmpty()) return
         util.showDialogCondition(this, getString(R.string.TextDeleteQuestion)) {
-            //MarkViewModel.delete(id)
-            Toast.makeText(this, getString(R.string.TextDeleteSuccess), Toast.LENGTH_SHORT).show()
+            mark_ViewModel.delete(id)
+            showMessage(R.string.TextDeleteSuccess)
             finish()
         }
     }
