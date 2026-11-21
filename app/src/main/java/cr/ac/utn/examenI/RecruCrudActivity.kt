@@ -14,6 +14,8 @@ import androidx.core.view.WindowInsetsCompat
 import cr.ac.utn.examenI.util.EXTRA_ID
 import cr.ac.utn.examenI.util.util
 import java.time.LocalDateTime
+import cr.ac.utn.examenI.domain.model.Recruitment
+import cr.ac.utn.examenI.viewmodel.RecruViewModel
 
 class RecruCrudActivity : AppCompatActivity() {
     private lateinit var txtId: EditText
@@ -80,62 +82,91 @@ class RecruCrudActivity : AppCompatActivity() {
         findViewById<Button>(R.id.btnCancel).setOnClickListener { finish() }
     }
 
+
     private fun loadExistingData(id: String) {
-        /*val item = RecruViewModel.getById(id) ?: return
+        val item = RecruViewModel.getById(id) as? Recruitment
+
+        if (item == null) {
+            Toast.makeText(
+                this,
+                "Recruitment not found",
+                Toast.LENGTH_SHORT
+            ).show()
+            finish()
+            return
+        }
+
         txtId.setText(item.id)
         txtId.isEnabled = false
+
         txtName.setText(item.name)
         txtFirstName.setText(item.firstName)
         txtLastName.setText(item.lastName)
         txtPhone.setText(item.phone.toString())
         txtEmail.setText(item.email)
         txtAddress.setText(item.address)
+
         txtProvince.setText(item.province)
         txtCanton.setText(item.canton)
         txtDistrict.setText(item.district)
+
         txtTargetCompany.setText(item.targetCompany)
+
         chkSoftware.isChecked = item.roles.contains("Software")
         chkInfra.isChecked = item.roles.contains("Infra")
         chkRedes.isChecked = item.roles.contains("Redes")
         chkSeguridad.isChecked = item.roles.contains("Seguridad")
         chkQA.isChecked = item.roles.contains("QA")
+
         txtSalaryExpectation.setText(item.salaryExpectation.toString())
         txtExperienceYears.setText(item.experienceYears.toString())
-        txtDateTime.setText(util.formatDateTime(item.registrationDateTime))*/
+        txtDateTime.setText(
+            util.formatDateTime(item.registrationDateTime)
+        )
     }
+
 
     private fun doSave() {
         val id = txtId.text.toString().trim()
         val name = txtName.text.toString().trim()
         val company = txtTargetCompany.text.toString().trim()
+        val salary = txtSalaryExpectation.text.toString().toDoubleOrNull()
         val dateTimeStr = txtDateTime.text.toString().trim()
+        val phone = txtPhone.text.toString().toIntOrNull()
+        val dt = util.parseStringToDateTimeModern(dateTimeStr)
 
         if (id.isEmpty() || name.isEmpty() || company.isEmpty()) {
             Toast.makeText(this, "Por favor complete los campos requeridos.", Toast.LENGTH_SHORT).show()
             return
         }
 
-        val expYears = txtExperienceYears.text.toString().toIntOrNull() ?: 0
-        if (expYears >= 0) {
+        val expYears = txtExperienceYears.text.toString().toIntOrNull()
+        if (expYears == null || expYears < 0) {
             Toast.makeText(this, "Los años de experiencia deben ser mayores o iguales a 0", Toast.LENGTH_SHORT).show()
             return
         }
 
-        if (!txtAddress.text.toString().contains("@")) {
+        if (phone == null || phone <= 0) {
+            Toast.makeText(this, "Ingrese un número de teléfono válido.", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        if (!txtEmail.text.toString().trim().contains("@")) {
             Toast.makeText(this, "El correo electrónico debe ser válido.", Toast.LENGTH_SHORT).show()
             return
         }
 
-        val dt = util.parseStringToDateTimeModern(dateTimeStr)
         if (dt == null || dt.isAfter(LocalDateTime.now())) {
-            Toast.makeText(this, "La fecha de registro debe ser menor o igual a la actual.", Toast.LENGTH_SHORT).show()
+            Toast.makeText(
+                this,
+                "La fecha de registro debe ser menor o igual a la actual.",
+                Toast.LENGTH_SHORT
+            ).show()
             return
         }
 
-        // Unique registration per company
-        val duplicateCompanyReg = false //RecruViewModel.getAll().any { it.id == id && it.targetCompany.equals(company, ignoreCase = true) && currentId.isNullOrEmpty() }
-        if (duplicateCompanyReg) {
-            Toast.makeText(this, "Esta persona ya tiene un registro activo para la empresa $company.", Toast.LENGTH_SHORT).show()
+        if (salary == null || salary <= 0) {
+            Toast.makeText(this, "Ingrese una pretensión salarial válida.", Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -147,26 +178,54 @@ class RecruCrudActivity : AppCompatActivity() {
         if (chkQA.isChecked) selectedRoles.add("QA")
 
 
+        val duplicateCompanyReg = RecruViewModel.getAll().any {
+            it is Recruitment &&
+                    it.id == id &&
+                    it.targetCompany.equals(company, ignoreCase = true) &&
+                    it.id != currentId
+        }
+
+        if (duplicateCompanyReg) {
+            Toast.makeText(this, "Esta persona ya tiene un registro activo para la empresa $company.", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+
+        val item = Recruitment(
+            id = id,
+            name = name,
+            firstName = txtFirstName.text.toString().trim(),
+            lastName = txtLastName.text.toString().trim(),
+            phone = phone,
+            email = txtEmail.text.toString().trim(),
+            address = txtAddress.text.toString().trim(),
+            province = txtProvince.text.toString().trim(),
+            canton = txtCanton.text.toString().trim(),
+            district = txtDistrict.text.toString().trim(),
+            targetCompany = company,
+            roles = selectedRoles,
+            salaryExpectation = salary,
+            experienceYears = expYears,
+            registrationDateTime = dt
+        )
+
 
         if (currentId.isNullOrEmpty()) {
-            if (null != null) {
-                Toast.makeText(this, getString(R.string.TextDuplicateData), Toast.LENGTH_SHORT).show()
-                return
-            }
-            //RecruViewModel.save(item)
+            RecruViewModel.save(item)
         } else {
-            //RecruViewModel.update(item)
+            RecruViewModel.update(item)
         }
 
         Toast.makeText(this, getString(R.string.TextSaveSuccess), Toast.LENGTH_SHORT).show()
         finish()
     }
 
+
     private fun doDelete() {
         val id = txtId.text.toString().trim()
         if (id.isEmpty()) return
         util.showDialogCondition(this, getString(R.string.TextDeleteQuestion)) {
-            //RecruViewModel.delete(id)
+            RecruViewModel.delete(id)
             Toast.makeText(this, getString(R.string.TextDeleteSuccess), Toast.LENGTH_SHORT).show()
             finish()
         }
