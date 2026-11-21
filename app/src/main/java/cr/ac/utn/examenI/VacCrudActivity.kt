@@ -12,12 +12,18 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import cr.ac.utn.examenI.domain.model.Identifier
+import androidx.lifecycle.ViewModelProvider
+import cr.ac.utn.examenI.domain.model.VacLocation
+import cr.ac.utn.examenI.domain.model.VacVaccination
+import cr.ac.utn.examenI.domain.model.VacVaccineType
 import cr.ac.utn.examenI.util.EXTRA_ID
 import cr.ac.utn.examenI.util.util
+import cr.ac.utn.examenI.viewmodel.VacViewModel
 import java.time.LocalDateTime
 
 class VacCrudActivity : AppCompatActivity() {
+    private lateinit var viewModel: VacViewModel
+
     private lateinit var txtId: EditText
     private lateinit var txtName: EditText
     private lateinit var txtFirstName: EditText
@@ -26,36 +32,25 @@ class VacCrudActivity : AppCompatActivity() {
     private lateinit var txtEmail: EditText
     private lateinit var txtAddress: EditText
     private lateinit var spnVaccineType: Spinner
-    private lateinit var txtLocation: EditText
+    private lateinit var spnLocation: Spinner
     private lateinit var txtDateTime: EditText
 
     private var currentId: String? = null
-    private val vaccines = arrayOf("COVID-19", "Influenza", "Tétanos", "Hepatitis B")
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_vac_crud)
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.vac_main)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
 
-        txtId = findViewById(R.id.txtId)
-        txtName = findViewById(R.id.txtName)
-        txtFirstName = findViewById(R.id.txtFirstName)
-        txtLastName = findViewById(R.id.txtLastName)
-        txtPhone = findViewById(R.id.txtPhone)
-        txtEmail = findViewById(R.id.txtEmail)
-        txtAddress = findViewById(R.id.txtAddress)
-        spnVaccineType = findViewById(R.id.spnVaccineType)
-        txtLocation = findViewById(R.id.txtLocation)
-        txtDateTime = findViewById(R.id.txtDateTime)
+        viewModel = ViewModelProvider(this)[VacViewModel::class.java]
 
-        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, vaccines)
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        spnVaccineType.adapter = adapter
+        bindViews()
+        setupSpinners()
 
         currentId = intent.getStringExtra(EXTRA_ID)
         if (!currentId.isNullOrEmpty()) {
@@ -64,68 +59,95 @@ class VacCrudActivity : AppCompatActivity() {
             txtDateTime.setText(util.formatDateTime(LocalDateTime.now()))
         }
 
-        findViewById<Button>(R.id.btnSave).setOnClickListener { doSave() }
-        findViewById<Button>(R.id.btnDelete).setOnClickListener { doDelete() }
-        findViewById<Button>(R.id.btnCancel).setOnClickListener { doDelete() }
+        findViewById<Button>(R.id.vac_btn_save).setOnClickListener { doSave() }
+        findViewById<Button>(R.id.vac_btn_delete).setOnClickListener { doDelete() }
+        findViewById<Button>(R.id.vac_btn_cancel).setOnClickListener { finish() }
+    }
+
+    private fun bindViews() {
+        txtId = findViewById(R.id.vac_txt_id)
+        txtName = findViewById(R.id.vac_txt_name)
+        txtFirstName = findViewById(R.id.vac_txt_first_name)
+        txtLastName = findViewById(R.id.vac_txt_last_name)
+        txtPhone = findViewById(R.id.vac_txt_phone)
+        txtEmail = findViewById(R.id.vac_txt_email)
+        txtAddress = findViewById(R.id.vac_txt_address)
+        spnVaccineType = findViewById(R.id.vac_spn_vaccine_type)
+        spnLocation = findViewById(R.id.vac_spn_location)
+        txtDateTime = findViewById(R.id.vac_txt_date_time)
+    }
+
+    private fun setupSpinners() {
+        spnVaccineType.adapter = ArrayAdapter(
+            this, android.R.layout.simple_spinner_dropdown_item, VacVaccineType.entries.toList()
+        )
+        spnLocation.adapter = ArrayAdapter(
+            this, android.R.layout.simple_spinner_dropdown_item, VacLocation.entries.toList()
+        )
     }
 
     private fun loadExistingData(id: String) {
-        /*val item = VacViewModel.getById(id) ?: return
+        val item = viewModel.getById(id)
+        if (item == null) {
+            Toast.makeText(this, getString(R.string.TextDataNoFound), Toast.LENGTH_SHORT).show()
+            finish()
+            return
+        }
         txtId.setText(item.id)
-        txtId.isEnabled = false
+        txtId.isEnabled = false // the id identifies the record, it cannot change
         txtName.setText(item.name)
         txtFirstName.setText(item.firstName)
         txtLastName.setText(item.lastName)
         txtPhone.setText(item.phone.toString())
         txtEmail.setText(item.email)
         txtAddress.setText(item.address)
-        val pos = vaccines.indexOf(item.vaccineType)
-        if (pos >= 0) spnVaccineType.setSelection(pos)
-        txtLocation.setText(item.location)
-        txtDateTime.setText(util.formatDateTime(item.vaccinationDateTime))*/
+        spnVaccineType.setSelection(VacVaccineType.entries.indexOf(item.vaccineType))
+        spnLocation.setSelection(VacLocation.entries.indexOf(item.location))
+        txtDateTime.setText(util.formatDateTime(item.vaccinationDateTime))
+    }
+
+    private fun showError(field: EditText) {
+        field.error = getString(R.string.TextSaveError) // marks the field that failed
+        field.requestFocus()
     }
 
     private fun doSave() {
         val id = txtId.text.toString().trim()
         val name = txtName.text.toString().trim()
-        val location = txtLocation.text.toString().trim()
-        val dateTimeStr = txtDateTime.text.toString().trim()
+        val firstName = txtFirstName.text.toString().trim()
+        val lastName = txtLastName.text.toString().trim()
+        val phoneText = txtPhone.text.toString().trim()
+        val phone = phoneText.toIntOrNull()
 
-        if (id.isEmpty() || name.isEmpty() || location.isEmpty()) {
-            Toast.makeText(this, "Por favor complete los campos requeridos.", Toast.LENGTH_SHORT).show()
-            return
-        }
+        if (id.isEmpty()) { showError(txtId); return }
+        if (name.isEmpty()) { showError(txtName); return }
+        if (firstName.isEmpty()) { showError(txtFirstName); return }
+        if (phone == null || phoneText.length != 8) { showError(txtPhone); return }
 
-        val appliedDoses = 3
-        val totalDoses = 2
-        if (appliedDoses < totalDoses) {
-            Toast.makeText(this, "Las dosis aplicadas no pueden ser mayores a las dosis totales.", Toast.LENGTH_SHORT).show()
-            return
-        }
+        val dateTime = util.parseStringToDateTimeModern(txtDateTime.text.toString().trim())
+        if (dateTime == null) { showError(txtDateTime); return }
+        if (!viewModel.isDateTimeValid(dateTime)) { showError(txtDateTime); return }
 
-        val boosterDate = LocalDateTime.now().minusMonths(6)
-
-        val dt = util.parseStringToDateTimeModern(dateTimeStr)
-        if (dt == null) {
-            Toast.makeText(this, "Formato de fecha y hora inválido (yyyy-MM-dd HH:mm)", Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        if (dt.isAfter(LocalDateTime.now())) {
-            Toast.makeText(this, "La fecha de vacunación debe ser menor o igual a la fecha actual.", Toast.LENGTH_SHORT).show()
-            return
-        }
-
-
+        val item = VacVaccination(
+            id = id,
+            name = name,
+            firstName = firstName,
+            lastName = lastName,
+            phone = phone,
+            email = txtEmail.text.toString().trim(),
+            address = txtAddress.text.toString().trim(),
+            vaccineType = spnVaccineType.selectedItem as VacVaccineType,
+            location = spnLocation.selectedItem as VacLocation,
+            vaccinationDateTime = dateTime
+        )
 
         if (currentId.isNullOrEmpty()) {
-            if (null != null) {
+            if (!viewModel.save(item)) {
                 Toast.makeText(this, getString(R.string.TextDuplicateData), Toast.LENGTH_SHORT).show()
                 return
             }
-            //VacViewModel.save(item)
         } else {
-            //VacViewModel.update(item)
+            viewModel.update(item)
         }
 
         Toast.makeText(this, getString(R.string.TextSaveSuccess), Toast.LENGTH_SHORT).show()
@@ -133,10 +155,10 @@ class VacCrudActivity : AppCompatActivity() {
     }
 
     private fun doDelete() {
-        val id = txtId.text.toString().trim()
-        if (id.isEmpty()) return
+        val id = currentId
+        if (id.isNullOrEmpty()) return // nothing stored yet, nothing to delete
         util.showDialogCondition(this, getString(R.string.TextDeleteQuestion)) {
-            //VacViewModel.delete(id)
+            viewModel.delete(id)
             Toast.makeText(this, getString(R.string.TextDeleteSuccess), Toast.LENGTH_SHORT).show()
             finish()
         }
