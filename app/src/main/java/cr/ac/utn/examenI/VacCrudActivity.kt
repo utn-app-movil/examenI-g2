@@ -7,7 +7,6 @@ import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Spinner
-import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -18,7 +17,6 @@ import cr.ac.utn.examenI.domain.model.VacLocation
 import cr.ac.utn.examenI.domain.model.VacVaccination
 import cr.ac.utn.examenI.domain.model.VacVaccineType
 import cr.ac.utn.examenI.util.EXTRA_ID
-import cr.ac.utn.examenI.util.VacLabels
 import cr.ac.utn.examenI.util.util
 import cr.ac.utn.examenI.viewmodel.VacViewModel
 import java.time.LocalDateTime
@@ -52,7 +50,6 @@ class VacCrudActivity : AppCompatActivity() {
         viewModel = ViewModelProvider(this)[VacViewModel::class.java]
 
         bindViews()
-        setupLabels()
         setupSpinners()
 
         currentId = intent.getStringExtra(EXTRA_ID)
@@ -78,20 +75,6 @@ class VacCrudActivity : AppCompatActivity() {
         spnVaccineType = findViewById(R.id.vac_spn_vaccine_type)
         spnLocation = findViewById(R.id.vac_spn_location)
         txtDateTime = findViewById(R.id.vac_txt_date_time)
-    }
-
-    private fun setupLabels() {
-        txtId.hint = VacLabels.ID
-        txtName.hint = VacLabels.NAME
-        txtFirstName.hint = VacLabels.FIRST_NAME
-        txtLastName.hint = VacLabels.LAST_NAME
-        txtPhone.hint = VacLabels.PHONE
-        txtEmail.hint = VacLabels.EMAIL
-        txtAddress.hint = VacLabels.ADDRESS
-        txtDateTime.hint = VacLabels.DATE_TIME_HINT
-        findViewById<TextView>(R.id.vac_lbl_vaccine_type).text = VacLabels.VACCINE_TYPE
-        findViewById<TextView>(R.id.vac_lbl_location).text = VacLabels.LOCATION
-        findViewById<TextView>(R.id.vac_lbl_date_time).text = VacLabels.DATE_TIME
     }
 
     private fun setupSpinners() {
@@ -123,9 +106,9 @@ class VacCrudActivity : AppCompatActivity() {
         txtDateTime.setText(util.formatDateTime(item.vaccinationDateTime))
     }
 
-    private fun showError(field: EditText? = null) {
-        field?.requestFocus()
-        Toast.makeText(this, getString(R.string.TextSaveError), Toast.LENGTH_SHORT).show()
+    private fun showError(field: EditText) {
+        field.error = getString(R.string.TextSaveError) // marks the field that failed
+        field.requestFocus()
     }
 
     private fun doSave() {
