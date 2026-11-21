@@ -11,8 +11,11 @@ import androidx.recyclerview.widget.RecyclerView
 import cr.ac.utn.examenI.domain.model.Identifier
 import cr.ac.utn.examenI.util.EXTRA_ID
 import cr.ac.utn.examenI.util.util
+import androidx.activity.viewModels
+import cr.ac.utn.examenI.viewmodel.LicViewModel
 
 class LicListActivity : AppCompatActivity(), OnItemClickListener {
+    private val licViewModel: LicViewModel by viewModels()
     private lateinit var rvList: RecyclerView
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -39,7 +42,7 @@ class LicListActivity : AppCompatActivity(), OnItemClickListener {
     }
 
     private fun loadData() {
-        val items = emptyList<Identifier>()
+        val items: List<Identifier> = licViewModel.getAll()
         rvList.adapter = ListAdapter(items, this)
     }
 
