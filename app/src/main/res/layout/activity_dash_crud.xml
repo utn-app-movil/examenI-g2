@@ -27,6 +27,7 @@
         <EditText android:id="@+id/txtAddress" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="Direccion" />
 
         <EditText android:id="@+id/txtContributionsTotal" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="Total Contribuciones" android:inputType="numberDecimal" />
+        <EditText android:id="@+id/txtDay" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="Dia (1-31)" android:inputType="number"  />
         <EditText android:id="@+id/txtMonth" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="Mes (1-12)" android:inputType="number" />
         <EditText android:id="@+id/txtYear" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="Año (ej. 2025)" android:inputType="number" />
 
