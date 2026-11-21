@@ -1,3 +1,4 @@
+
 package cr.ac.utn.examenI
 
 import android.os.Bundle
@@ -9,16 +10,19 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import cr.ac.utn.examenI.domain.model.Identifier
+import cr.ac.utn.examenI.viewmodel.PhaViewModel
 import cr.ac.utn.examenI.util.EXTRA_ID
 import cr.ac.utn.examenI.util.util
 
 class PhaListActivity : AppCompatActivity(), OnItemClickListener {
+
     private lateinit var rvList: RecyclerView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_pha_list)
+
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
@@ -39,11 +43,16 @@ class PhaListActivity : AppCompatActivity(), OnItemClickListener {
     }
 
     private fun loadData() {
-        val items = emptyList<Identifier>()
+        val items = PhaViewModel.getAll()
         rvList.adapter = ListAdapter(items, this)
     }
 
     override fun onItemClick(obj: Identifier) {
-        util.openActivity(this, PhaCrudActivity::class.java, EXTRA_ID, obj.id)
+        util.openActivity(
+            this,
+            PhaCrudActivity::class.java,
+            EXTRA_ID,
+            obj.id
+        )
     }
 }
